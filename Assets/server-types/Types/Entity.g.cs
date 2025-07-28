@@ -21,20 +21,20 @@ namespace SpacetimeDB.Types
         public DbVector2 Position;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
-        [DataMember(Name = "LastSplitTime")]
-        public SpacetimeDB.Timestamp LastSplitTime;
+        [DataMember(Name = "LastSequenceId")]
+        public ulong LastSequenceId;
 
         public Entity(
             uint EntityId,
             DbVector2 Position,
             DbVector2 Direction,
-            SpacetimeDB.Timestamp LastSplitTime
+            ulong LastSequenceId
         )
         {
             this.EntityId = EntityId;
             this.Position = Position;
             this.Direction = Direction;
-            this.LastSplitTime = LastSplitTime;
+            this.LastSequenceId = LastSequenceId;
         }
 
         public Entity()

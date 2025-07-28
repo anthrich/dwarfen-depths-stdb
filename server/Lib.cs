@@ -11,6 +11,7 @@ public static partial class Module
         [PrimaryKey]
         public uint Id;
         public ulong WorldSize;
+        public ulong CurrentSequenceId;
     }
     
     [Table(Name = "Entity", Public = true)]
@@ -20,7 +21,7 @@ public static partial class Module
         public uint EntityId;
         public DbVector2 Position;
         public DbVector2 Direction;
-        public Timestamp LastSplitTime;
+        public ulong LastSequenceId;
     }
     
     [Table(Name = "Player", Public = true)]
@@ -45,7 +46,11 @@ public static partial class Module
     public static void Init(ReducerContext ctx)
     {
         Log.Info($"Initializing...");
-        ctx.Db.Config.Insert(new Config { WorldSize = 100 });
+        var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());;
+        config.WorldSize = 100;
+        config.CurrentSequenceId = 0;
+        ctx.Db.Config.Id.Update(config);
+        
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
         {
             ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000 * ScheduleEntityMovementTime))
@@ -91,7 +96,9 @@ public static partial class Module
     [Reducer]
     public static void MoveAllEntities(ReducerContext ctx, MoveAllEntitiesTimer timer)
     {
-        var worldSize = (ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found")).WorldSize;
+        var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
+        var worldSize = config.WorldSize;
+        var currentSequenceId = config.CurrentSequenceId;
 
         var entityDirections = ctx.Db.Entity.Iter().Select(c => (c.EntityId, c.Direction * EntitySpeed)).ToDictionary();
         
@@ -104,8 +111,12 @@ public static partial class Module
             var newPos = checkEntity.Position + direction * ScheduleEntityMovementTime;
             checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
             checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
+            checkEntity.LastSequenceId = currentSequenceId;
             ctx.Db.Entity.EntityId.Update(checkEntity);
         }
+
+        config.CurrentSequenceId++;
+        ctx.Db.Config.Id.Update(config);
     }
     
     [Reducer]

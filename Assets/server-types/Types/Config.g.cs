@@ -19,18 +19,18 @@ namespace SpacetimeDB.Types
         public uint Id;
         [DataMember(Name = "WorldSize")]
         public ulong WorldSize;
-        [DataMember(Name = "CurrentSequenceId")]
-        public ulong CurrentSequenceId;
+        [DataMember(Name = "LastEntityUpdate")]
+        public SpacetimeDB.Timestamp LastEntityUpdate;
 
         public Config(
             uint Id,
             ulong WorldSize,
-            ulong CurrentSequenceId
+            SpacetimeDB.Timestamp LastEntityUpdate
         )
         {
             this.Id = Id;
             this.WorldSize = WorldSize;
-            this.CurrentSequenceId = CurrentSequenceId;
+            this.LastEntityUpdate = LastEntityUpdate;
         }
 
         public Config()

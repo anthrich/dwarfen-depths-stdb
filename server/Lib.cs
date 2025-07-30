@@ -11,7 +11,7 @@ public static partial class Module
         [PrimaryKey]
         public uint Id;
         public ulong WorldSize;
-        public ulong CurrentSequenceId;
+        public Timestamp LastEntityUpdate;
     }
     
     [Table(Name = "Entity", Public = true)]
@@ -55,9 +55,9 @@ public static partial class Module
     public static void Init(ReducerContext ctx)
     {
         Log.Info($"Initializing...");
-        var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());;
+        var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
-        config.CurrentSequenceId = 0;
+        config.LastEntityUpdate = new DateTimeOffset(DateTime.UtcNow);
         ctx.Db.Config.Id.Update(config);
         
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
@@ -121,6 +121,9 @@ public static partial class Module
         var worldSize = config.WorldSize;
         
         var playerInputs = ctx.Db.PlayerInput.Iter().Select(pi => (pi.PlayerId, pi)).ToDictionary();
+        var timeStarted = ctx.Timestamp;
+        var timeSinceLastUpdate =
+            ((TimeSpan)timeStarted.TimeDurationSince(config.LastEntityUpdate)).Milliseconds / 1000f;
         
         foreach (var entity in ctx.Db.Entity.Iter())
         {
@@ -129,14 +132,14 @@ public static partial class Module
             var checkEntity = checkEntityQuery.GetValueOrDefault();
             var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
             if(!hasInput) continue;
-            var newPos = checkEntity.Position + playerInput.Direction * (EntitySpeed * ScheduleEntityMovementTime);
+            var newPos = checkEntity.Position + playerInput.Direction * (EntitySpeed * timeSinceLastUpdate);
             checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
             checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
             checkEntity.SequenceId = playerInput.SequenceId;
             ctx.Db.Entity.EntityId.Update(checkEntity);
         }
 
-        config.CurrentSequenceId++;
+        config.LastEntityUpdate = timeStarted;
         ctx.Db.Config.Id.Update(config);
     }
     

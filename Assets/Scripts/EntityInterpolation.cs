@@ -14,6 +14,7 @@ public class EntityInterpolation : MonoBehaviour
 
     public void SetCanonicalPosition(Vector3 position)
     {
+        if(Vector3.Distance(position, _current) < 0.001f) return;
         _previous = _current;
         _current = position;
         _lerpTime = 0.0f;

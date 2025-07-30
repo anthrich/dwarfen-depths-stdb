@@ -14,12 +14,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, DbVector2 direction);
+        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, DbVector2 direction, ulong sequenceId);
         public event UpdatePlayerInputHandler? OnUpdatePlayerInput;
 
-        public void UpdatePlayerInput(DbVector2 direction)
+        public void UpdatePlayerInput(DbVector2 direction, ulong sequenceId)
         {
-            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(direction), this.SetCallReducerFlags.UpdatePlayerInputFlags);
+            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(direction, sequenceId), this.SetCallReducerFlags.UpdatePlayerInputFlags);
         }
 
         public bool InvokeUpdatePlayerInput(ReducerEventContext ctx, Reducer.UpdatePlayerInput args)
@@ -38,7 +38,8 @@ namespace SpacetimeDB.Types
             }
             OnUpdatePlayerInput(
                 ctx,
-                args.Direction
+                args.Direction,
+                args.SequenceId
             );
             return true;
         }
@@ -52,10 +53,16 @@ namespace SpacetimeDB.Types
         {
             [DataMember(Name = "direction")]
             public DbVector2 Direction;
+            [DataMember(Name = "sequenceId")]
+            public ulong SequenceId;
 
-            public UpdatePlayerInput(DbVector2 Direction)
+            public UpdatePlayerInput(
+                DbVector2 Direction,
+                ulong SequenceId
+            )
             {
                 this.Direction = Direction;
+                this.SequenceId = SequenceId;
             }
 
             public UpdatePlayerInput()

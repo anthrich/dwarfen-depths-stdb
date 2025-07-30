@@ -125,7 +125,8 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-        entityController.OnEntityUpdated(newEntity);
+        
+        entityController.SendMessage("OnEntityUpdated", newEntity);
     }
 
     private static void EntityOnDelete(EventContext context, Entity oldEntity)

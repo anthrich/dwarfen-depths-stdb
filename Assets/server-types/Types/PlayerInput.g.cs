@@ -13,33 +13,28 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Entity
+    public sealed partial class PlayerInput
     {
-        [DataMember(Name = "EntityId")]
-        public uint EntityId;
-        [DataMember(Name = "Position")]
-        public DbVector2 Position;
+        [DataMember(Name = "PlayerId")]
+        public uint PlayerId;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
         [DataMember(Name = "SequenceId")]
         public ulong SequenceId;
 
-        public Entity(
-            uint EntityId,
-            DbVector2 Position,
+        public PlayerInput(
+            uint PlayerId,
             DbVector2 Direction,
             ulong SequenceId
         )
         {
-            this.EntityId = EntityId;
-            this.Position = Position;
+            this.PlayerId = PlayerId;
             this.Direction = Direction;
             this.SequenceId = SequenceId;
         }
 
-        public Entity()
+        public PlayerInput()
         {
-            this.Position = new();
             this.Direction = new();
         }
     }

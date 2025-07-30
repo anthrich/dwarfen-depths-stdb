@@ -1,6 +1,6 @@
 using SpacetimeDB.Types;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using PlayerInput = UnityEngine.InputSystem.PlayerInput;
 
 public class PrefabManager : MonoBehaviour
 {

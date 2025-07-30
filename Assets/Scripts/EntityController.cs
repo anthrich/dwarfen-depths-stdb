@@ -1,4 +1,5 @@
-﻿using SpacetimeDB.Types;
+﻿using JetBrains.Annotations;
+using SpacetimeDB.Types;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -8,35 +9,31 @@ public class EntityController : MonoBehaviour
 
     [DoNotSerialize]
     public uint entityId;
-
-    protected float LerpTime;
-    protected Vector3 LerpStartPosition;
-    protected Vector3 LerpTargetPosition;
+    const uint EntitySpeed = 10;
 
     public void Spawn(uint spawnedEntityId)
     {
         entityId = spawnedEntityId;
         var entity = GameManager.Conn.Db.Entity.EntityId.Find(spawnedEntityId);
         var pos = entity?.Position.ToUnityVector2() ?? Vector2.zero;
-        LerpStartPosition = LerpTargetPosition = transform.position = new Vector3(pos.x, transform.position.y, pos.y);
+        transform.position = new Vector3(pos.x, transform.position.y, pos.y);
     }
 
+    /*[UsedImplicitly]
     public void OnEntityUpdated(Entity newVal)
     {
-        LerpTime = 0.0f;
-        LerpStartPosition = transform.position;
         var newVector2 = newVal.Position.ToUnityVector2();
-        LerpTargetPosition = new Vector3(newVector2.x, transform.position.y, newVector2.y);
-    }
+        transform.position = new Vector3(newVector2.x, transform.position.y, newVector2.y);
+    }*/
 
     public void OnDelete(EventContext context)
     {
         Destroy(gameObject);
     }
 
-    public void Update()
+    public void ApplyDirection(Vector2 direction, float deltaTime)
     {
-        LerpTime = Mathf.Min(LerpTime + Time.deltaTime, LerpDurationSec);
-        transform.position = Vector3.Lerp(LerpStartPosition, LerpTargetPosition, LerpTime / LerpDurationSec);
+        var movement = direction * (EntitySpeed * deltaTime);
+        transform.position += new Vector3(movement.x, 0, movement.y);
     }
 }

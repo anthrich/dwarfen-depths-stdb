@@ -21,7 +21,7 @@ public static partial class Module
         public uint EntityId;
         public DbVector2 Position;
         public DbVector2 Direction;
-        public ulong LastSequenceId;
+        public ulong SequenceId;
     }
     
     [Table(Name = "Player", Public = true)]
@@ -32,6 +32,15 @@ public static partial class Module
         [Unique, AutoInc]
         public uint PlayerId;
         public string Name;
+    }
+
+    [Table(Name = "PlayerInput", Public = false)]
+    public partial struct PlayerInput
+    {
+        [PrimaryKey]
+        public uint PlayerId;
+        public DbVector2 Direction;
+        public ulong SequenceId;
     }
     
     [Table(Name = "moveAllEntitiesTimer", Scheduled = nameof(MoveAllEntities), ScheduledAt = nameof(ScheduledAt))]
@@ -81,16 +90,28 @@ public static partial class Module
     }
     
     [Reducer]
-    public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction)
+    public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction, ulong sequenceId)
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        var entityQuery = ctx.Db.Entity.EntityId.Find(player.PlayerId);
-        if (entityQuery.HasValue)
-        {
-            var entity = entityQuery.GetValueOrDefault();
-            entity.Direction = direction.Normalized;
-            ctx.Db.Entity.EntityId.Update(entity);
+        var directionNormalized = direction.Normalized;
+        var playerInputQuery = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
+        
+        if (!playerInputQuery.HasValue) {
+            ctx.Db.PlayerInput.Insert(new PlayerInput()
+            {
+                PlayerId = player.PlayerId,
+                Direction = directionNormalized,
+                SequenceId = sequenceId
+            });
+            
+            return;
         }
+        
+        if(sequenceId < playerInputQuery.Value.SequenceId) return;
+        var playerInput = playerInputQuery.GetValueOrDefault();
+        playerInput.Direction = direction.Normalized;
+        playerInput.SequenceId = sequenceId;
+        ctx.Db.PlayerInput.PlayerId.Update(playerInput);
     }
     
     [Reducer]
@@ -98,20 +119,20 @@ public static partial class Module
     {
         var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
         var worldSize = config.WorldSize;
-        var currentSequenceId = config.CurrentSequenceId;
-
-        var entityDirections = ctx.Db.Entity.Iter().Select(c => (c.EntityId, c.Direction * EntitySpeed)).ToDictionary();
+        
+        var playerInputs = ctx.Db.PlayerInput.Iter().Select(pi => (pi.PlayerId, pi)).ToDictionary();
         
         foreach (var entity in ctx.Db.Entity.Iter())
         {
             var checkEntityQuery = ctx.Db.Entity.EntityId.Find(entity.EntityId);
             if (!checkEntityQuery.HasValue) continue;
             var checkEntity = checkEntityQuery.GetValueOrDefault();
-            var direction = entityDirections[checkEntity.EntityId];
-            var newPos = checkEntity.Position + direction * ScheduleEntityMovementTime;
+            var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
+            if(!hasInput) continue;
+            var newPos = checkEntity.Position + playerInput.Direction * (EntitySpeed * ScheduleEntityMovementTime);
             checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
             checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
-            checkEntity.LastSequenceId = currentSequenceId;
+            checkEntity.SequenceId = playerInput.SequenceId;
             ctx.Db.Entity.EntityId.Update(checkEntity);
         }
 

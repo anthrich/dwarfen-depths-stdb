@@ -1,7 +1,7 @@
 ﻿using SpacetimeDB.Types;
 using UnityEngine;
 
-public static class SpacetimeDbExtensions
+public static class Vector2Extensions
 {
     public static Vector2 ToUnityVector2(this DbVector2 vec)
     {

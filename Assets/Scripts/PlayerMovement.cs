@@ -11,7 +11,7 @@ public class PlayerMovement : MonoBehaviour
     public Transform cameraTransform;
     public EntityController entityController;
     public Transform serverStateObject;
-    public bool applyReconcilliation = true;
+    public bool applyReconciliation = true;
     public bool applyPrediction = true;
 
     private const int CacheSize = 1024;
@@ -96,7 +96,7 @@ public class PlayerMovement : MonoBehaviour
             _currentSequenceId++;
         }
         
-        if(applyReconcilliation) Reconcile();
+        if(applyReconciliation) Reconcile();
     }
 
     private void SendInput()
@@ -131,14 +131,8 @@ public class PlayerMovement : MonoBehaviour
         var serverPosition = _serverEntityState.Position.ToUnityVector2();
         var posDif = Vector2.Distance(cachedSimulationState.Position, serverPosition);
         
-        var serverStateMessage =
-            $"<color=#5bc18e>{_serverEntityState.SequenceId}:{serverPosition}</color>";
-        var cachedStateMessage =
-            $"<color=#5bc1c1>{cachedSimulationState.SequenceId}:{cachedSimulationState.Position}</color>";
-        
         if (posDif > 0.001f)
         {
-            Debug.Log($"Reconciled: {serverStateMessage} : {cachedStateMessage}");
             transform.position = new Vector3(serverPosition.x, transform.position.y, serverPosition.y);
             var rewindTick = _serverEntityState.SequenceId + 1;
             while (rewindTick < _currentSequenceId)
@@ -147,13 +141,12 @@ public class PlayerMovement : MonoBehaviour
                 var rewoundInput = _inputStateCache[rewindCacheIndex];
                 var rewoundSimulation = _simulationStateCache[rewindCacheIndex];
                 
-                if (InputState.IsDefault(rewoundInput) ||
-                    SimulationState.IsDefault(rewoundSimulation))
+                if (InputState.IsDefault(rewoundInput) || SimulationState.IsDefault(rewoundSimulation))
                 {
                     ++rewindTick;
                     continue;
                 }
-                Debug.Log($"Rewind: {_serverEntityState.SequenceId} : {rewindTick}");
+
                 if(applyPrediction) entityController.ApplyDirection(rewoundInput.Direction, ServerUpdateInterval);
                 _simulationStateCache[rewindCacheIndex] = CurrentSimulationState();
                 _simulationStateCache[rewindCacheIndex].SequenceId = rewindTick;

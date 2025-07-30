@@ -3,7 +3,9 @@ using SpacetimeDB;
 public static partial class Module
 {
     const uint EntitySpeed = 10;
-    private const float ScheduleEntityMovementTime = 0.05f;
+    private const float UpdateEntityTickRate = 0.02f;
+    private const float UpdateEntityInterval = 0.05f;
+    private const float MovementPerInterval = EntitySpeed * UpdateEntityInterval;
     
     [Table(Name = "Config", Public = true)]
     public partial struct Config
@@ -11,7 +13,15 @@ public static partial class Module
         [PrimaryKey]
         public uint Id;
         public ulong WorldSize;
-        public Timestamp LastEntityUpdate;
+    }
+    
+    [Table(Name = "EntityUpdate", Public = false)]
+    public partial struct EntityUpdate
+    {
+        [PrimaryKey]
+        public uint Id;
+        public Timestamp LastTickedAt;
+        public float DeltaTime;
     }
     
     [Table(Name = "Entity", Public = true)]
@@ -57,12 +67,14 @@ public static partial class Module
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
-        config.LastEntityUpdate = new DateTimeOffset(DateTime.UtcNow);
         ctx.Db.Config.Id.Update(config);
+        var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
+        entityUpdate.LastTickedAt = ctx.Timestamp;
+        ctx.Db.EntityUpdate.Id.Update(entityUpdate);
         
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
         {
-            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000 * ScheduleEntityMovementTime))
+            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000 * UpdateEntityTickRate))
         });
     }
     
@@ -110,29 +122,36 @@ public static partial class Module
     public static void MoveAllEntities(ReducerContext ctx, MoveAllEntitiesTimer timer)
     {
         var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
+        var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
         var worldSize = config.WorldSize;
         
         var playerInputs = ctx.Db.PlayerInput.Iter().Select(pi => (pi.PlayerId, pi)).ToDictionary();
-        var timeStarted = ctx.Timestamp;
-        var timeSinceLastUpdate =
-            ((TimeSpan)timeStarted.TimeDurationSince(config.LastEntityUpdate)).Milliseconds / 1000f;
+        var timeSinceLastTick =
+            ((TimeSpan)ctx.Timestamp.TimeDurationSince(entityUpdate.LastTickedAt)).Milliseconds / 1000f;
+        entityUpdate.DeltaTime += timeSinceLastTick;
+        var entities = ctx.Db.Entity.Iter().ToArray();
         
-        foreach (var entity in ctx.Db.Entity.Iter())
+        while (entityUpdate.DeltaTime >= UpdateEntityInterval)
         {
-            var checkEntityQuery = ctx.Db.Entity.EntityId.Find(entity.EntityId);
-            if (!checkEntityQuery.HasValue) continue;
-            var checkEntity = checkEntityQuery.GetValueOrDefault();
-            var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
-            if(!hasInput) continue;
-            var newPos = checkEntity.Position + playerInput.Direction * (EntitySpeed * timeSinceLastUpdate);
-            checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
-            checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
-            checkEntity.SequenceId = playerInput.SequenceId;
-            ctx.Db.Entity.EntityId.Update(checkEntity);
+            entityUpdate.DeltaTime -= UpdateEntityInterval;
+            
+            foreach (var entity in entities)
+            {
+                var checkEntityQuery = ctx.Db.Entity.EntityId.Find(entity.EntityId);
+                if (!checkEntityQuery.HasValue) continue;
+                var checkEntity = checkEntityQuery.GetValueOrDefault();
+                var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
+                if(!hasInput) continue;
+                var newPos = checkEntity.Position + playerInput.Direction * MovementPerInterval;
+                checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
+                checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
+                checkEntity.SequenceId = playerInput.SequenceId;
+                ctx.Db.Entity.EntityId.Update(checkEntity);
+            }
         }
-
-        config.LastEntityUpdate = timeStarted;
-        ctx.Db.Config.Id.Update(config);
+        
+        entityUpdate.LastTickedAt = ctx.Timestamp;
+        ctx.Db.EntityUpdate.Id.Update(entityUpdate);
     }
     
     [Reducer]

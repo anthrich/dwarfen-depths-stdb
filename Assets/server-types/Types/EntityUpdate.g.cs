@@ -13,23 +13,27 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Config
+    public sealed partial class EntityUpdate
     {
         [DataMember(Name = "Id")]
         public uint Id;
-        [DataMember(Name = "WorldSize")]
-        public ulong WorldSize;
+        [DataMember(Name = "LastTickedAt")]
+        public SpacetimeDB.Timestamp LastTickedAt;
+        [DataMember(Name = "DeltaTime")]
+        public float DeltaTime;
 
-        public Config(
+        public EntityUpdate(
             uint Id,
-            ulong WorldSize
+            SpacetimeDB.Timestamp LastTickedAt,
+            float DeltaTime
         )
         {
             this.Id = Id;
-            this.WorldSize = WorldSize;
+            this.LastTickedAt = LastTickedAt;
+            this.DeltaTime = DeltaTime;
         }
 
-        public Config()
+        public EntityUpdate()
         {
         }
     }

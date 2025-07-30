@@ -12,6 +12,7 @@ public class PlayerMovement : MonoBehaviour
     public EntityController entityController;
     public Transform serverStateObject;
     public bool applyReconcilliation = true;
+    public bool applyPrediction = true;
 
     private const int CacheSize = 1024;
     private const float ServerUpdateInterval = 0.05f;
@@ -21,7 +22,6 @@ public class PlayerMovement : MonoBehaviour
     private ulong _currentSequenceId;
     private Entity _serverEntityState = new();
     private ulong _lastCorrectedSequenceId;
-    private DateTimeOffset _lastUpdateTime;
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
@@ -33,7 +33,6 @@ public class PlayerMovement : MonoBehaviour
         
         public Vector2 Direction;
         public ulong SequenceId;
-        public float DeltaTime;
     }
 
     public struct SimulationState
@@ -50,7 +49,6 @@ public class PlayerMovement : MonoBehaviour
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
         if(entityController == default) entityController = GetComponent<EntityController>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
-        _lastUpdateTime = DateTimeOffset.Now;
     }
     
     [UsedImplicitly]
@@ -85,15 +83,15 @@ public class PlayerMovement : MonoBehaviour
         _accumulatedDeltaTime += Time.deltaTime;
         while (_accumulatedDeltaTime >= ServerUpdateInterval)
         {
-            var literalUpdateTimespan = DateTimeOffset.Now - _lastUpdateTime;
-            var literalDeltaTime = literalUpdateTimespan.Milliseconds / 1000f;
-            _lastUpdateTime = DateTimeOffset.Now;
             _accumulatedDeltaTime -= ServerUpdateInterval;
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
-            var input = GetInput(literalDeltaTime);
+            var input = GetInput();
             _inputStateCache[cacheIndex] = input;
             _simulationStateCache[cacheIndex] = CurrentSimulationState();
-            entityController.ApplyDirection(input.Direction, literalDeltaTime);
+            if (applyPrediction)
+            {
+                entityController.ApplyDirection(input.Direction, ServerUpdateInterval);
+            }
             SendInput();
             _currentSequenceId++;
         }
@@ -107,13 +105,12 @@ public class PlayerMovement : MonoBehaviour
         GameManager.Conn.Reducers.UpdatePlayerInput(direction, _currentSequenceId);
     }
     
-    private InputState GetInput(float deltaTime)
+    private InputState GetInput()
     {
         return new InputState
         {
             Direction = _movement,
             SequenceId = _currentSequenceId,
-            DeltaTime = deltaTime
         };
     }
 
@@ -157,7 +154,7 @@ public class PlayerMovement : MonoBehaviour
                     continue;
                 }
                 Debug.Log($"Rewind: {_serverEntityState.SequenceId} : {rewindTick}");
-                entityController.ApplyDirection(rewoundInput.Direction, rewoundInput.DeltaTime);
+                if(applyPrediction) entityController.ApplyDirection(rewoundInput.Direction, ServerUpdateInterval);
                 _simulationStateCache[rewindCacheIndex] = CurrentSimulationState();
                 _simulationStateCache[rewindCacheIndex].SequenceId = rewindTick;
                 ++rewindTick;

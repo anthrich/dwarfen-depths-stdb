@@ -28,11 +28,12 @@ public class PlayerMovement : MonoBehaviour
 
     public struct InputState
     {
-        public static bool IsDefault(InputState inputState) =>
-            inputState.Direction == Vector2.zero && inputState.SequenceId == 0;
+        public static bool IsDefault(InputState @is) =>
+            @is.Direction == Vector2.zero && @is.SequenceId == 0;
         
         public Vector2 Direction;
         public ulong SequenceId;
+        public float DeltaTime;
     }
 
     public struct SimulationState
@@ -84,14 +85,15 @@ public class PlayerMovement : MonoBehaviour
         _accumulatedDeltaTime += Time.deltaTime;
         while (_accumulatedDeltaTime >= ServerUpdateInterval)
         {
-            var updateTime = DateTimeOffset.Now - _lastUpdateTime;
+            var literalUpdateTimespan = DateTimeOffset.Now - _lastUpdateTime;
+            var literalDeltaTime = literalUpdateTimespan.Milliseconds / 1000f;
             _lastUpdateTime = DateTimeOffset.Now;
             _accumulatedDeltaTime -= ServerUpdateInterval;
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
-            var input = GetInput();
+            var input = GetInput(literalDeltaTime);
             _inputStateCache[cacheIndex] = input;
             _simulationStateCache[cacheIndex] = CurrentSimulationState();
-            entityController.ApplyDirection(input.Direction, updateTime.Milliseconds / 1000f);
+            entityController.ApplyDirection(input.Direction, literalDeltaTime);
             SendInput();
             _currentSequenceId++;
         }
@@ -105,12 +107,13 @@ public class PlayerMovement : MonoBehaviour
         GameManager.Conn.Reducers.UpdatePlayerInput(direction, _currentSequenceId);
     }
     
-    private InputState GetInput()
+    private InputState GetInput(float deltaTime)
     {
         return new InputState
         {
             Direction = _movement,
-            SequenceId = _currentSequenceId
+            SequenceId = _currentSequenceId,
+            DeltaTime = deltaTime
         };
     }
 
@@ -144,17 +147,17 @@ public class PlayerMovement : MonoBehaviour
             while (rewindTick < _currentSequenceId)
             {
                 var rewindCacheIndex = Convert.ToInt32(rewindTick % CacheSize);
-                var rewindCachedInputState = _inputStateCache[rewindCacheIndex];
-                var rewindCachedSimulationState = _simulationStateCache[rewindCacheIndex];
+                var rewoundInput = _inputStateCache[rewindCacheIndex];
+                var rewoundSimulation = _simulationStateCache[rewindCacheIndex];
                 
-                if (InputState.IsDefault(rewindCachedInputState) ||
-                    SimulationState.IsDefault(rewindCachedSimulationState))
+                if (InputState.IsDefault(rewoundInput) ||
+                    SimulationState.IsDefault(rewoundSimulation))
                 {
                     ++rewindTick;
                     continue;
                 }
                 Debug.Log($"Rewind: {_serverEntityState.SequenceId} : {rewindTick}");
-                entityController.ApplyDirection(rewindCachedInputState.Direction, ServerUpdateInterval);
+                entityController.ApplyDirection(rewoundInput.Direction, rewoundInput.DeltaTime);
                 _simulationStateCache[rewindCacheIndex] = CurrentSimulationState();
                 _simulationStateCache[rewindCacheIndex].SequenceId = rewindTick;
                 ++rewindTick;

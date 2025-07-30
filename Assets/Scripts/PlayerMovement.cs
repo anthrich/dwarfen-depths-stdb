@@ -9,19 +9,22 @@ using UnityEngine.Serialization;
 public class PlayerMovement : MonoBehaviour
 {
     public Transform cameraTransform;
-    public EntityController entityController;
+    public EntityInterpolation entityInterpolation;
     public Transform serverStateObject;
     public bool applyReconciliation = true;
     public bool applyPrediction = true;
 
     private const int CacheSize = 1024;
     private const float ServerUpdateInterval = 0.05f;
+    private const float MovementSpeed = 10f;
+    private const float SpeedPerInterval = MovementSpeed * ServerUpdateInterval;
     
     private Vector2 _movement = Vector2.zero;
     private float _accumulatedDeltaTime;
     private ulong _currentSequenceId;
     private Entity _serverEntityState = new();
     private ulong _lastCorrectedSequenceId;
+    private float _yPosition;
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
@@ -47,8 +50,11 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
-        if(entityController == default) entityController = GetComponent<EntityController>();
+        if(entityInterpolation == default) entityInterpolation = GetComponent<EntityInterpolation>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
+        entityInterpolation.SetDeltaTime(ServerUpdateInterval);
+        entityInterpolation.SetCanonicalPosition(transform.position);
+        _yPosition = transform.position.y;
     }
     
     [UsedImplicitly]
@@ -56,7 +62,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (newServerEntityState.SequenceId < _serverEntityState.SequenceId) return;
         _serverEntityState = newServerEntityState;
-        serverStateObject.position = newServerEntityState.Position.ToGamePosition(transform.position.y);
+        serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
     }
 
     [UsedImplicitly]
@@ -87,16 +93,28 @@ public class PlayerMovement : MonoBehaviour
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
             var input = GetInput();
             _inputStateCache[cacheIndex] = input;
-            _simulationStateCache[cacheIndex] = CurrentSimulationState();
+            var canonicalPosition = entityInterpolation.GetCanonicalPosition();
+            _simulationStateCache[cacheIndex] = new SimulationState
+            {
+                Position = new Vector2(canonicalPosition.x, canonicalPosition.z),
+                SequenceId = _currentSequenceId
+            };
             if (applyPrediction)
             {
-                entityController.ApplyDirection(input.Direction, ServerUpdateInterval);
+                var newPosition = ApplyDirection(input.Direction, canonicalPosition);
+                entityInterpolation.SetCanonicalPosition(newPosition);
             }
             SendInput();
             _currentSequenceId++;
         }
         
         if(applyReconciliation) Reconcile();
+    }
+    
+    private Vector3 ApplyDirection(Vector2 direction, Vector3 targetPosition)
+    {
+        var movement = direction * SpeedPerInterval;
+        return targetPosition + new Vector3(movement.x, 0, movement.y);
     }
 
     private void SendInput()
@@ -114,15 +132,6 @@ public class PlayerMovement : MonoBehaviour
         };
     }
 
-    private SimulationState CurrentSimulationState()
-    {
-        return new SimulationState
-        {
-            Position = new Vector2(transform.position.x, transform.position.z),
-            SequenceId = _currentSequenceId
-        };
-    }
-
     private void Reconcile()
     {
         if(_serverEntityState.SequenceId <= _lastCorrectedSequenceId) return;
@@ -133,8 +142,9 @@ public class PlayerMovement : MonoBehaviour
         
         if (posDif > 0.001f)
         {
-            transform.position = new Vector3(serverPosition.x, transform.position.y, serverPosition.y);
+            var newPosition = new Vector3(serverPosition.x, _yPosition, serverPosition.y);
             var rewindTick = _serverEntityState.SequenceId + 1;
+            
             while (rewindTick < _currentSequenceId)
             {
                 var rewindCacheIndex = Convert.ToInt32(rewindTick % CacheSize);
@@ -147,11 +157,21 @@ public class PlayerMovement : MonoBehaviour
                     continue;
                 }
 
-                if(applyPrediction) entityController.ApplyDirection(rewoundInput.Direction, ServerUpdateInterval);
-                _simulationStateCache[rewindCacheIndex] = CurrentSimulationState();
-                _simulationStateCache[rewindCacheIndex].SequenceId = rewindTick;
+                if (applyPrediction)
+                {
+                    newPosition = ApplyDirection(rewoundInput.Direction, newPosition);
+                }
+                
+                _simulationStateCache[rewindCacheIndex] = new SimulationState
+                {
+                    Position = newPosition,
+                    SequenceId = rewindTick
+                };
+                
                 ++rewindTick;
             }
+            
+            entityInterpolation.SetCanonicalPosition(newPosition);
         }
 
         _lastCorrectedSequenceId = _serverEntityState.SequenceId;

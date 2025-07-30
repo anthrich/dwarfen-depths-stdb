@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 935626874577812233}
   - component: {fileID: -9117302646181658269}
   - component: {fileID: 951342305943730875}
+  - component: {fileID: -5600291194868439924}
   m_Layer: 0
   m_Name: Entity
   m_TagString: Untagged
@@ -292,3 +293,15 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &-5600291194868439924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8028854990512219912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a91a493d1ee0437a9f996c85c6eb852e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

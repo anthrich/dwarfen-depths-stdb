@@ -17,11 +17,11 @@ public class PlayerMovement : MonoBehaviour
     private const float ServerUpdateInterval = 0.05f;
     
     private Vector2 _movement = Vector2.zero;
-    private float _accumulatedDeltaTime = 0.0f;
+    private float _accumulatedDeltaTime;
     private ulong _currentSequenceId;
     private Entity _serverEntityState = new();
     private ulong _lastCorrectedSequenceId;
-    private long _lastServerUpdateTime;
+    private DateTimeOffset _lastUpdateTime;
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
@@ -49,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
         if(entityController == default) entityController = GetComponent<EntityController>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
-        _lastServerUpdateTime = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+        _lastUpdateTime = DateTimeOffset.Now;
     }
     
     [UsedImplicitly]
@@ -58,10 +58,6 @@ public class PlayerMovement : MonoBehaviour
         if (newServerEntityState.SequenceId < _serverEntityState.SequenceId) return;
         _serverEntityState = newServerEntityState;
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(transform.position.y);
-        var timeNow = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
-        var diff = timeNow - _lastServerUpdateTime;
-        Debug.Log($"MS since last server update: <color=#5bc1c1>{diff}</color>");
-        _lastServerUpdateTime = timeNow;
     }
 
     [UsedImplicitly]
@@ -88,12 +84,14 @@ public class PlayerMovement : MonoBehaviour
         _accumulatedDeltaTime += Time.deltaTime;
         while (_accumulatedDeltaTime >= ServerUpdateInterval)
         {
+            var updateTime = DateTimeOffset.Now - _lastUpdateTime;
+            _lastUpdateTime = DateTimeOffset.Now;
             _accumulatedDeltaTime -= ServerUpdateInterval;
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
             var input = GetInput();
             _inputStateCache[cacheIndex] = input;
             _simulationStateCache[cacheIndex] = CurrentSimulationState();
-            entityController.ApplyDirection(input.Direction, ServerUpdateInterval);
+            entityController.ApplyDirection(input.Direction, updateTime.Milliseconds / 1000f);
             SendInput();
             _currentSequenceId++;
         }
@@ -137,8 +135,6 @@ public class PlayerMovement : MonoBehaviour
             $"<color=#5bc18e>{_serverEntityState.SequenceId}:{serverPosition}</color>";
         var cachedStateMessage =
             $"<color=#5bc1c1>{cachedSimulationState.SequenceId}:{cachedSimulationState.Position}</color>";
-        
-        Debug.Log($"Matching: {serverStateMessage} : {cachedStateMessage}");
         
         if (posDif > 0.001f)
         {

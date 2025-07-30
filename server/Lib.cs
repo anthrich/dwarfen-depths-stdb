@@ -69,16 +69,19 @@ public static partial class Module
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
-        var player = ctx.Db.Player.Identity.Find(ctx.Sender);
-        
-        if(!player.HasValue)
+        var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? ctx.Db.Player.Insert(new Player
         {
-            ctx.Db.Player.Insert(new Player
-            {
-                Identity = ctx.Sender,
-                Name = "",
-            });
-        }
+            Identity = ctx.Sender,
+            Name = "",
+        });
+        var playerInput = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
+        if (playerInput.HasValue) return;
+        ctx.Db.PlayerInput.Insert(new PlayerInput
+        {
+            PlayerId = player.PlayerId,
+            Direction = new DbVector2(),
+            SequenceId = 0
+        });
     }
     
     [Reducer(ReducerKind.ClientDisconnected)]
@@ -86,6 +89,7 @@ public static partial class Module
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         ctx.Db.Player.Identity.Delete(player.Identity);
+        ctx.Db.PlayerInput.PlayerId.Delete(player.PlayerId);
         ctx.Db.Entity.EntityId.Delete(player.PlayerId);
     }
     
@@ -93,20 +97,8 @@ public static partial class Module
     public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction, ulong sequenceId)
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        var directionNormalized = direction.Normalized;
         var playerInputQuery = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
-        
-        if (!playerInputQuery.HasValue) {
-            ctx.Db.PlayerInput.Insert(new PlayerInput()
-            {
-                PlayerId = player.PlayerId,
-                Direction = directionNormalized,
-                SequenceId = sequenceId
-            });
-            
-            return;
-        }
-        
+        if (!playerInputQuery.HasValue) return;
         if(sequenceId < playerInputQuery.Value.SequenceId) return;
         var playerInput = playerInputQuery.GetValueOrDefault();
         playerInput.Direction = direction.Normalized;

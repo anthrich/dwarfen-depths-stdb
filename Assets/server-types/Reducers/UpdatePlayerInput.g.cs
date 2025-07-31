@@ -14,12 +14,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, DbVector2 direction, ulong sequenceId);
+        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, Input input);
         public event UpdatePlayerInputHandler? OnUpdatePlayerInput;
 
-        public void UpdatePlayerInput(DbVector2 direction, ulong sequenceId)
+        public void UpdatePlayerInput(Input input)
         {
-            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(direction, sequenceId), this.SetCallReducerFlags.UpdatePlayerInputFlags);
+            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(input), this.SetCallReducerFlags.UpdatePlayerInputFlags);
         }
 
         public bool InvokeUpdatePlayerInput(ReducerEventContext ctx, Reducer.UpdatePlayerInput args)
@@ -38,8 +38,7 @@ namespace SpacetimeDB.Types
             }
             OnUpdatePlayerInput(
                 ctx,
-                args.Direction,
-                args.SequenceId
+                args.Input
             );
             return true;
         }
@@ -51,23 +50,17 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class UpdatePlayerInput : Reducer, IReducerArgs
         {
-            [DataMember(Name = "direction")]
-            public DbVector2 Direction;
-            [DataMember(Name = "sequenceId")]
-            public ulong SequenceId;
+            [DataMember(Name = "input")]
+            public Input Input;
 
-            public UpdatePlayerInput(
-                DbVector2 Direction,
-                ulong SequenceId
-            )
+            public UpdatePlayerInput(Input Input)
             {
-                this.Direction = Direction;
-                this.SequenceId = SequenceId;
+                this.Input = Input;
             }
 
             public UpdatePlayerInput()
             {
-                this.Direction = new();
+                this.Input = new();
             }
 
             string IReducerArgs.ReducerName => "UpdatePlayerInput";

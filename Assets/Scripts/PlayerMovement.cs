@@ -5,6 +5,7 @@ using SpacetimeDB.Types;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
+using Input = SpacetimeDB.Types.Input;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -60,7 +61,11 @@ public class PlayerMovement : MonoBehaviour
     [UsedImplicitly]
     public void OnEntityUpdated(Entity newServerEntityState)
     {
-        if (newServerEntityState.SequenceId < _serverEntityState.SequenceId) return;
+        if (newServerEntityState.SequenceId != _serverEntityState.SequenceId + 1)
+        {
+            Debug.Log("Missed sequence id: " + _serverEntityState.SequenceId + 1);
+        }
+        
         _serverEntityState = newServerEntityState;
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
     }
@@ -122,7 +127,7 @@ public class PlayerMovement : MonoBehaviour
     private void SendInput()
     {
         var direction = new DbVector2(_movement.x, _movement.y);
-        GameManager.Conn.Reducers.UpdatePlayerInput(direction, _currentSequenceId);
+        GameManager.Conn.Reducers.UpdatePlayerInput(new Input(_currentSequenceId, direction));
     }
     
     private InputState GetInput()

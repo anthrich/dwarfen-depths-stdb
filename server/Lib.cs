@@ -116,15 +116,14 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction, ulong sequenceId)
+    public static void UpdatePlayerInput(ReducerContext ctx, Input input)
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         var playerInputQuery = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
         if (!playerInputQuery.HasValue) return;
-        if(sequenceId < playerInputQuery.Value.SequenceId) return;
         var playerInput = playerInputQuery.GetValueOrDefault();
-        playerInput.Direction = direction.Normalized;
-        playerInput.SequenceId = sequenceId;
+        playerInput.Direction = input.Direction.Normalized;
+        playerInput.SequenceId = input.SequenceId;
         ctx.Db.PlayerInput.PlayerId.Update(playerInput);
     }
 

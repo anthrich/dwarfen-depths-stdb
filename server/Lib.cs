@@ -149,7 +149,7 @@ public static partial class Module
         {
             var playerInputs = ctx.Db.PlayerInput.SequenceId.Filter(entityUpdate.SequenceId)
                 .GroupBy(pi => pi.PlayerId)
-                .Select(grp => (grp.Key, grp.ToArray()))
+                .Select(grp => (grp.Key, grp.First()))
                 .ToDictionary();
             
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
@@ -175,19 +175,17 @@ public static partial class Module
 
     private static Entity UpdateEntity(
         Entity entity,
-        Dictionary<uint, PlayerInput[]> playerInputs,
+        Dictionary<uint, PlayerInput> playerInputs,
         ulong sequenceId,
         Config config)
     {
-        var hasInputs = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
-        Log.Info($"Found player inputs: {string.Join(", ", playerInput!.Select(p => p.SequenceId).ToArray())}");
-        var sequencedInput = playerInput?.FirstOrDefault(pi => pi.SequenceId == sequenceId);
+        var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
+        Log.Info($"Found player inputs: {playerInput.SequenceId}");
         
-        if (hasInputs && sequencedInput.HasValue)
+        if (hasInput)
         {
-            Log.Info($"Found sequence input: {sequencedInput.Value}");
             var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
-            var newPos = entity.Position + sequencedInput.Value.Direction * movementPerInterval;
+            var newPos = entity.Position + playerInput.Direction * movementPerInterval;
             entity.Position.X = Math.Clamp(newPos.X, 0, config.WorldSize);
             entity.Position.Y= Math.Clamp(newPos.Y, 0, config.WorldSize);
         }

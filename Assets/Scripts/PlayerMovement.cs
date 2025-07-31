@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using SpacetimeDB;
 using SpacetimeDB.Types;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using Input = SpacetimeDB.Types.Input;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour, IPublisher<double[]>
 {
     public Transform cameraTransform;
     public EntityInterpolation entityInterpolation;
@@ -29,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     private ulong _lastCorrectedSequenceId;
     private float _yPosition;
     private DateTimeOffset _lastServerUpdateAt;
+    private List<ISubscriber<double[]>> _entitySubscribers = new();
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
@@ -62,12 +61,28 @@ public class PlayerMovement : MonoBehaviour
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
         InvokeRepeating(nameof(ReportAverageServerUpdateTime), 1f, 1f);
     }
+    
+    public void Subscribe(ISubscriber<double[]> subscriber)
+    {
+        _entitySubscribers.Add(subscriber);
+    }
+
+    public void Unsubscribe(int instanceId)
+    {
+        var subscriber = _entitySubscribers.FirstOrDefault(s => s.GetInstanceID() == instanceId);
+        if(subscriber != null) _entitySubscribers.Remove(subscriber);
+    }
 
     void ReportAverageServerUpdateTime()
     {
         while (_serverUpdateLatencyCache.Count > 30)
         {
             _serverUpdateLatencyCache.RemoveAt(0);
+        }
+        
+        foreach (var entitySubscriber in _entitySubscribers)
+        {
+            entitySubscriber.SubscriptionUpdate(_serverUpdateLatencyCache.ToArray());
         }
         
         Debug.Log($"Average MS between server updates: {_serverUpdateLatencyCache.Average()}".WithRTColour("#2d94bc"));

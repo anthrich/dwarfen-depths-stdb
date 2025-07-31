@@ -5,6 +5,7 @@ using PlayerInput = UnityEngine.InputSystem.PlayerInput;
 public class PrefabManager : MonoBehaviour
 {
     private static PrefabManager _instance;
+    public LatencyChart latencyChart;
     public PlayerController playerPrefab;
     public EntityController entityPrefab;
 
@@ -31,6 +32,7 @@ public class PrefabManager : MonoBehaviour
         {
             var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
             playerMovement.OnEntitySpawned(entity);
+            playerMovement.Subscribe(_instance.latencyChart);
             entityController.GetComponent<PlayerInput>().enabled = true;
         }
 

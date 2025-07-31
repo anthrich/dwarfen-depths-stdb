@@ -28,7 +28,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Instance = this;
-        Application.targetFrameRate = 60;
         PlayerPrefs.DeleteAll();
         // In order to build a connection to SpacetimeDB we need to register
         // our callbacks and specify a SpacetimeDB server URI and module name.

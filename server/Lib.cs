@@ -180,7 +180,6 @@ public static partial class Module
         Config config)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
-        Log.Info($"Found player inputs: {playerInput.SequenceId}");
         
         if (hasInput)
         {

@@ -2,17 +2,14 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    const uint EntitySpeed = 10;
-    private const float UpdateEntityTickRate = 0.02f;
-    private const float UpdateEntityInterval = 0.05f;
-    private const float MovementPerInterval = EntitySpeed * UpdateEntityInterval;
-    
     [Table(Name = "Config", Public = true)]
     public partial struct Config
     {
         [PrimaryKey]
         public uint Id;
         public ulong WorldSize;
+        public float UpdateEntityTickRate;
+        public float UpdateEntityInterval;
     }
     
     [Table(Name = "EntityUpdate", Public = false)]
@@ -29,6 +26,7 @@ public static partial class Module
     {
         [PrimaryKey] 
         public uint EntityId;
+        public float Speed;
         public DbVector2 Position;
         public DbVector2 Direction;
         public ulong SequenceId;
@@ -67,6 +65,8 @@ public static partial class Module
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
+        config.UpdateEntityTickRate = 0.01f;
+        config.UpdateEntityInterval = 0.05f;
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;
@@ -74,10 +74,10 @@ public static partial class Module
         
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
         {
-            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000 * UpdateEntityTickRate))
+            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityTickRate))
         });
     }
-    
+
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
@@ -95,7 +95,7 @@ public static partial class Module
             SequenceId = 0
         });
     }
-    
+
     [Reducer(ReducerKind.ClientDisconnected)]
     public static void Disconnect(ReducerContext ctx)
     {
@@ -104,7 +104,17 @@ public static partial class Module
         ctx.Db.PlayerInput.PlayerId.Delete(player.PlayerId);
         ctx.Db.Entity.EntityId.Delete(player.PlayerId);
     }
-    
+
+    [Reducer]
+    public static void EnterGame(ReducerContext ctx, string name)
+    {
+        Log.Info($"Creating player with name {name}");
+        var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
+        player.Name = name;
+        ctx.Db.Player.Identity.Update(player);
+        SpawnPlayer(ctx, player.PlayerId);
+    }
+
     [Reducer]
     public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction, ulong sequenceId)
     {
@@ -117,7 +127,7 @@ public static partial class Module
         playerInput.SequenceId = sequenceId;
         ctx.Db.PlayerInput.PlayerId.Update(playerInput);
     }
-    
+
     [Reducer]
     public static void MoveAllEntities(ReducerContext ctx, MoveAllEntitiesTimer timer)
     {
@@ -131,9 +141,9 @@ public static partial class Module
         entityUpdate.DeltaTime += timeSinceLastTick;
         var entities = ctx.Db.Entity.Iter().ToArray();
         
-        while (entityUpdate.DeltaTime >= UpdateEntityInterval)
+        while (entityUpdate.DeltaTime >= config.UpdateEntityInterval)
         {
-            entityUpdate.DeltaTime -= UpdateEntityInterval;
+            entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             
             foreach (var entity in entities)
             {
@@ -142,7 +152,8 @@ public static partial class Module
                 var checkEntity = checkEntityQuery.GetValueOrDefault();
                 var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
                 if(!hasInput) continue;
-                var newPos = checkEntity.Position + playerInput.Direction * MovementPerInterval;
+                var movementPerInterval = checkEntity.Speed * config.UpdateEntityInterval;
+                var newPos = checkEntity.Position + playerInput.Direction * movementPerInterval;
                 checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
                 checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
                 checkEntity.SequenceId = playerInput.SequenceId;
@@ -153,31 +164,21 @@ public static partial class Module
         entityUpdate.LastTickedAt = ctx.Timestamp;
         ctx.Db.EntityUpdate.Id.Update(entityUpdate);
     }
-    
-    [Reducer]
-    public static void EnterGame(ReducerContext ctx, string name)
-    {
-        Log.Info($"Creating player with name {name}");
-        var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        player.Name = name;
-        ctx.Db.Player.Identity.Update(player);
-        SpawnPlayer(ctx, player.PlayerId);
-    }
-    
+
     public static Entity SpawnPlayer(ReducerContext ctx, uint playerId)
     {
         var rng = ctx.Rng;
         var worldSize = (ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found")).WorldSize;
         var x = rng.NextSingle() * worldSize;
         var y = rng.NextSingle() * worldSize;
-        return SpawnPlayerAt(
+        return SpawnEntityAt(
             ctx,
             playerId,
             new DbVector2(x, y)
         );
     }
 
-    public static Entity SpawnPlayerAt(
+    public static Entity SpawnEntityAt(
         ReducerContext ctx, uint playerId, DbVector2 position)
     {
         var entity = ctx.Db.Entity.Insert(new Entity
@@ -185,6 +186,8 @@ public static partial class Module
             EntityId = playerId,
             Position = position,
             Direction = new DbVector2(0,0),
+            SequenceId = 0,
+            Speed = 10f
         });
         
         return entity;

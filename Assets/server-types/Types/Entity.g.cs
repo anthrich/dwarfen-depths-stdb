@@ -17,6 +17,8 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "EntityId")]
         public uint EntityId;
+        [DataMember(Name = "Speed")]
+        public float Speed;
         [DataMember(Name = "Position")]
         public DbVector2 Position;
         [DataMember(Name = "Direction")]
@@ -26,12 +28,14 @@ namespace SpacetimeDB.Types
 
         public Entity(
             uint EntityId,
+            float Speed,
             DbVector2 Position,
             DbVector2 Direction,
             ulong SequenceId
         )
         {
             this.EntityId = EntityId;
+            this.Speed = Speed;
             this.Position = Position;
             this.Direction = Direction;
             this.SequenceId = SequenceId;

@@ -15,6 +15,8 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class PlayerInput
     {
+        [DataMember(Name = "Id")]
+        public ulong Id;
         [DataMember(Name = "PlayerId")]
         public uint PlayerId;
         [DataMember(Name = "Direction")]
@@ -23,11 +25,13 @@ namespace SpacetimeDB.Types
         public ulong SequenceId;
 
         public PlayerInput(
+            ulong Id,
             uint PlayerId,
             DbVector2 Direction,
             ulong SequenceId
         )
         {
+            this.Id = Id;
             this.PlayerId = PlayerId;
             this.Direction = Direction;
             this.SequenceId = SequenceId;

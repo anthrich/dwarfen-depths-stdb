@@ -29,7 +29,8 @@ public class PrefabManager : MonoBehaviour
         
         if (owner.isLocalPlayer)
         {
-            entityController.gameObject.AddComponent<PlayerMovement>();
+            var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
+            playerMovement.OnEntitySpawned(entity);
             entityController.GetComponent<PlayerInput>().enabled = true;
         }
 

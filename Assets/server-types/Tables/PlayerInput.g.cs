@@ -19,21 +19,41 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "PlayerInput";
 
-            public sealed class PlayerIdUniqueIndex : UniqueIndexBase<uint>
+            public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
+            {
+                protected override ulong GetKey(PlayerInput row) => row.Id;
+
+                public IdUniqueIndex(PlayerInputHandle table) : base(table) { }
+            }
+
+            public readonly IdUniqueIndex Id;
+
+            public sealed class PlayerIdIndex : BTreeIndexBase<uint>
             {
                 protected override uint GetKey(PlayerInput row) => row.PlayerId;
 
-                public PlayerIdUniqueIndex(PlayerInputHandle table) : base(table) { }
+                public PlayerIdIndex(PlayerInputHandle table) : base(table) { }
             }
 
-            public readonly PlayerIdUniqueIndex PlayerId;
+            public readonly PlayerIdIndex PlayerId;
+
+            public sealed class SequenceIdIndex : BTreeIndexBase<ulong>
+            {
+                protected override ulong GetKey(PlayerInput row) => row.SequenceId;
+
+                public SequenceIdIndex(PlayerInputHandle table) : base(table) { }
+            }
+
+            public readonly SequenceIdIndex SequenceId;
 
             internal PlayerInputHandle(DbConnection conn) : base(conn)
             {
+                Id = new(this);
                 PlayerId = new(this);
+                SequenceId = new(this);
             }
 
-            protected override object GetPrimaryKey(PlayerInput row) => row.PlayerId;
+            protected override object GetPrimaryKey(PlayerInput row) => row.Id;
         }
 
         public readonly PlayerInputHandle PlayerInput;

@@ -17,6 +17,8 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "Id")]
         public uint Id;
+        [DataMember(Name = "SequenceId")]
+        public ulong SequenceId;
         [DataMember(Name = "LastTickedAt")]
         public SpacetimeDB.Timestamp LastTickedAt;
         [DataMember(Name = "DeltaTime")]
@@ -24,11 +26,13 @@ namespace SpacetimeDB.Types
 
         public EntityUpdate(
             uint Id,
+            ulong SequenceId,
             SpacetimeDB.Timestamp LastTickedAt,
             float DeltaTime
         )
         {
             this.Id = Id;
+            this.SequenceId = SequenceId;
             this.LastTickedAt = LastTickedAt;
             this.DeltaTime = DeltaTime;
         }

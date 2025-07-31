@@ -57,13 +57,19 @@ public class PlayerMovement : MonoBehaviour
         _yPosition = transform.position.y;
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
     }
+
+    public void OnEntitySpawned(Entity newServerEntityState)
+    {
+        _currentSequenceId = newServerEntityState.SequenceId;
+        
+    }
     
     [UsedImplicitly]
     public void OnEntityUpdated(Entity newServerEntityState)
     {
         if (newServerEntityState.SequenceId != _serverEntityState.SequenceId + 1)
         {
-            Debug.Log("Missed sequence id: " + _serverEntityState.SequenceId + 1);
+            Debug.Log($"Sequence issue: (Old){_serverEntityState.SequenceId} : (New){newServerEntityState.SequenceId}");
         }
         
         _serverEntityState = newServerEntityState;

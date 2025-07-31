@@ -17,6 +17,7 @@ public static partial class Module
     {
         [PrimaryKey]
         public uint Id;
+        public ulong SequenceId;
         public Timestamp LastTickedAt;
         public float DeltaTime;
     }
@@ -46,8 +47,12 @@ public static partial class Module
     public partial struct PlayerInput
     {
         [PrimaryKey]
+        [AutoInc]
+        public ulong Id;
+        [SpacetimeDB.Index.BTree]
         public uint PlayerId;
         public DbVector2 Direction;
+        [SpacetimeDB.Index.BTree]
         public ulong SequenceId;
     }
     
@@ -81,18 +86,14 @@ public static partial class Module
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
-        var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? ctx.Db.Player.Insert(new Player
+        var playerResult = ctx.Db.Player.Identity.Find(ctx.Sender);
+        
+        if(playerResult.HasValue) throw new Exception($"Player {ctx.Sender} is already connected");
+        
+        ctx.Db.Player.Insert(new Player
         {
             Identity = ctx.Sender,
             Name = "",
-        });
-        var playerInput = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
-        if (playerInput.HasValue) return;
-        ctx.Db.PlayerInput.Insert(new PlayerInput
-        {
-            PlayerId = player.PlayerId,
-            Direction = new DbVector2(),
-            SequenceId = 0
         });
     }
 
@@ -101,8 +102,8 @@ public static partial class Module
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         ctx.Db.Player.Identity.Delete(player.Identity);
-        ctx.Db.PlayerInput.PlayerId.Delete(player.PlayerId);
         ctx.Db.Entity.EntityId.Delete(player.PlayerId);
+        ctx.Db.PlayerInput.PlayerId.Delete(player.PlayerId);
     }
 
     [Reducer]
@@ -119,76 +120,95 @@ public static partial class Module
     public static void UpdatePlayerInput(ReducerContext ctx, Input input)
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        var playerInputQuery = ctx.Db.PlayerInput.PlayerId.Find(player.PlayerId);
-        if (!playerInputQuery.HasValue) return;
-        var playerInput = playerInputQuery.GetValueOrDefault();
-        playerInput.Direction = input.Direction.Normalized;
-        playerInput.SequenceId = input.SequenceId;
-        ctx.Db.PlayerInput.PlayerId.Update(playerInput);
+        ctx.Db.PlayerInput.Insert(
+            new PlayerInput
+            {
+                PlayerId = player.PlayerId,
+                Direction = input.Direction,
+                SequenceId = input.SequenceId
+            }
+        );
     }
 
     [Reducer]
     public static void MoveAllEntities(ReducerContext ctx, MoveAllEntitiesTimer timer)
     {
+        if (ctx.Sender != ctx.Identity)
+        {
+            throw new Exception("MoveAllEntities may not be invoked by clients, only via scheduling.");
+        }
+        
         var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
-        var worldSize = config.WorldSize;
         
-        var playerInputs = ctx.Db.PlayerInput.Iter().Select(pi => (pi.PlayerId, pi)).ToDictionary();
-        var timeSinceLastTick =
-            ((TimeSpan)ctx.Timestamp.TimeDurationSince(entityUpdate.LastTickedAt)).Milliseconds / 1000f;
-        entityUpdate.DeltaTime += timeSinceLastTick;
-        var entities = ctx.Db.Entity.Iter().ToArray();
+        TimeSpan timeSinceLastTick = ctx.Timestamp.TimeDurationSince(entityUpdate.LastTickedAt);
+        var secondsSinceLastTick = timeSinceLastTick.Milliseconds / 1000f;
+        entityUpdate.DeltaTime += secondsSinceLastTick;
         
         while (entityUpdate.DeltaTime >= config.UpdateEntityInterval)
         {
+            var playerInputs = ctx.Db.PlayerInput.SequenceId.Filter(entityUpdate.SequenceId)
+                .GroupBy(pi => pi.PlayerId)
+                .Select(grp => (grp.Key, grp.ToArray()))
+                .ToDictionary();
+            
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
+            var entities = ctx.Db.Entity.Iter().ToArray();
             
             foreach (var entity in entities)
             {
                 var checkEntityQuery = ctx.Db.Entity.EntityId.Find(entity.EntityId);
                 if (!checkEntityQuery.HasValue) continue;
-                var checkEntity = checkEntityQuery.GetValueOrDefault();
-                var hasInput = playerInputs.TryGetValue(checkEntity.EntityId, out var playerInput);
-                if(!hasInput) continue;
-                var movementPerInterval = checkEntity.Speed * config.UpdateEntityInterval;
-                var newPos = checkEntity.Position + playerInput.Direction * movementPerInterval;
-                checkEntity.Position.X = Math.Clamp(newPos.X, 0, worldSize);
-                checkEntity.Position.Y= Math.Clamp(newPos.Y, 0, worldSize);
-                checkEntity.SequenceId = playerInput.SequenceId;
-                ctx.Db.Entity.EntityId.Update(checkEntity);
+                var updateEntity = UpdateEntity(
+                    checkEntityQuery.Value, playerInputs, entityUpdate.SequenceId, config
+                );
+                ctx.Db.Entity.EntityId.Update(updateEntity);
             }
+            
+            ctx.Db.PlayerInput.SequenceId.Delete((0, entityUpdate.SequenceId));
+            entityUpdate.SequenceId++;
         }
         
         entityUpdate.LastTickedAt = ctx.Timestamp;
         ctx.Db.EntityUpdate.Id.Update(entityUpdate);
     }
 
-    public static Entity SpawnPlayer(ReducerContext ctx, uint playerId)
+    private static Entity UpdateEntity(
+        Entity entity,
+        Dictionary<uint, PlayerInput[]> playerInputs,
+        ulong sequenceId,
+        Config config)
     {
-        var rng = ctx.Rng;
-        var worldSize = (ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found")).WorldSize;
-        var x = rng.NextSingle() * worldSize;
-        var y = rng.NextSingle() * worldSize;
-        return SpawnEntityAt(
-            ctx,
-            playerId,
-            new DbVector2(x, y)
-        );
+        var hasInputs = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
+        Log.Info($"Found player inputs: {string.Join(", ", playerInput!.Select(p => p.SequenceId).ToArray())}");
+        var sequencedInput = playerInput?.FirstOrDefault(pi => pi.SequenceId == sequenceId);
+        
+        if (hasInputs && sequencedInput.HasValue)
+        {
+            Log.Info($"Found sequence input: {sequencedInput.Value}");
+            var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
+            var newPos = entity.Position + sequencedInput.Value.Direction * movementPerInterval;
+            entity.Position.X = Math.Clamp(newPos.X, 0, config.WorldSize);
+            entity.Position.Y= Math.Clamp(newPos.Y, 0, config.WorldSize);
+        }
+        
+        entity.SequenceId = sequenceId;
+        return entity;
     }
 
-    public static Entity SpawnEntityAt(
-        ReducerContext ctx, uint playerId, DbVector2 position)
+    private static void SpawnPlayer(ReducerContext ctx, uint playerId)
     {
-        var entity = ctx.Db.Entity.Insert(new Entity
+        var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
+        var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
+        var x = ctx.Rng.NextSingle() * config.WorldSize;
+        var y = ctx.Rng.NextSingle() * config.WorldSize;
+        ctx.Db.Entity.Insert(new Entity
         {
             EntityId = playerId,
-            Position = position,
+            Position = new DbVector2(x, y),
             Direction = new DbVector2(0,0),
-            SequenceId = 0,
+            SequenceId = entityUpdate.SequenceId,
             Speed = 10f
         });
-        
-        return entity;
     }
 }

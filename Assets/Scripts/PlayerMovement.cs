@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using SpacetimeDB;
 using SpacetimeDB.Types;
@@ -26,9 +28,11 @@ public class PlayerMovement : MonoBehaviour
     private Entity _serverEntityState = new();
     private ulong _lastCorrectedSequenceId;
     private float _yPosition;
+    private DateTimeOffset _lastServerUpdateAt;
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
+    private readonly List<double> _serverUpdateLatencyCache = new();
 
     public struct InputState
     {
@@ -56,22 +60,38 @@ public class PlayerMovement : MonoBehaviour
         entityInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
+        InvokeRepeating(nameof(ReportAverageServerUpdateTime), 1f, 1f);
+    }
+
+    void ReportAverageServerUpdateTime()
+    {
+        while (_serverUpdateLatencyCache.Count > 30)
+        {
+            _serverUpdateLatencyCache.RemoveAt(0);
+        }
+        
+        Debug.Log($"Average MS between server updates: {_serverUpdateLatencyCache.Average()}".WithRTColour("#2d94bc"));
+        Debug.Log($"Max MS between server updates: {_serverUpdateLatencyCache.Max()}".WithRTColour("#cc6c51"));
+        Debug.Log($"Min MS between server updates: {_serverUpdateLatencyCache.Min()}".WithRTColour("#63c958"));
     }
 
     public void OnEntitySpawned(Entity newServerEntityState)
     {
         _currentSequenceId = newServerEntityState.SequenceId;
-        
+        Debug.Log($"Entity spawned: {newServerEntityState}");
     }
     
     [UsedImplicitly]
     public void OnEntityUpdated(Entity newServerEntityState)
     {
-        if (newServerEntityState.SequenceId != _serverEntityState.SequenceId + 1)
+        if (_serverEntityState.SequenceId != 0 && newServerEntityState.SequenceId != _serverEntityState.SequenceId + 1)
         {
             Debug.Log($"Sequence issue: (Old){_serverEntityState.SequenceId} : (New){newServerEntityState.SequenceId}");
         }
         
+        var diff = DateTimeOffset.Now - _lastServerUpdateAt;
+        _lastServerUpdateAt = DateTimeOffset.Now;
+        _serverUpdateLatencyCache.Add(diff.TotalMilliseconds);
         _serverEntityState = newServerEntityState;
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
     }

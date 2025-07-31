@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
 	public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
     public static PlayerController LocalPlayer { get; private set; }
+    public static Config Config { get; private set; }
     public static DbConnection Conn { get; private set; }
 
     private static readonly Dictionary<uint, EntityController> Entities = new();
@@ -61,6 +62,8 @@ public class GameManager : MonoBehaviour
         Debug.Log("Connected.");
         AuthToken.SaveToken(token);
         LocalIdentity = identity;
+        Debug.Log(conn.Db.Config.Count);
+        conn.Db.Config.OnInsert += ConfigOnInsert;
         conn.Db.Entity.OnInsert += EntityOnInsert;
         conn.Db.Entity.OnUpdate += EntityOnUpdate;
         conn.Db.Entity.OnDelete += EntityOnDelete;
@@ -104,6 +107,12 @@ public class GameManager : MonoBehaviour
     {
         Conn.Disconnect();
         Conn = null;
+    }
+    
+    private static void ConfigOnInsert(EventContext context, Config insertedValue)
+    {
+        Debug.Log($"Got config: {insertedValue}");
+        Config = insertedValue;
     }
     
     private static void EntityOnInsert(EventContext context, Entity insertedValue)

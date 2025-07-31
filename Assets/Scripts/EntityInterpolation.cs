@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class EntityInterpolation : MonoBehaviour
 {
@@ -7,9 +8,9 @@ public class EntityInterpolation : MonoBehaviour
     private Vector3 _previous;
     public float lerpDuration = 0.1f;
 
-    public void SetDeltaTime(float deltaTime)
+    private void Start()
     {
-        lerpDuration = deltaTime;
+        lerpDuration = GameManager.Config.UpdateEntityInterval;
     }
 
     public void SetCanonicalPosition(Vector3 position)

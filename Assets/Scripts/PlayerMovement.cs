@@ -15,9 +15,9 @@ public class PlayerMovement : MonoBehaviour
     public bool applyPrediction = true;
 
     private const int CacheSize = 1024;
-    private const float ServerUpdateInterval = 0.05f;
-    private const float MovementSpeed = 10f;
-    private const float SpeedPerInterval = MovementSpeed * ServerUpdateInterval;
+    private float _serverUpdateInterval;
+    private float MovementSpeed => _serverEntityState.Speed;
+    private float SpeedPerInterval => MovementSpeed * _serverUpdateInterval;
     
     private Vector2 _movement = Vector2.zero;
     private float _accumulatedDeltaTime;
@@ -52,9 +52,9 @@ public class PlayerMovement : MonoBehaviour
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
         if(entityInterpolation == default) entityInterpolation = GetComponent<EntityInterpolation>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
-        entityInterpolation.SetDeltaTime(ServerUpdateInterval);
         entityInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
+        _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
     }
     
     [UsedImplicitly]
@@ -89,9 +89,9 @@ public class PlayerMovement : MonoBehaviour
         _accumulatedDeltaTime += Time.deltaTime;
         var canonicalPosition = entityInterpolation.GetCanonicalPosition();
         
-        while (_accumulatedDeltaTime >= ServerUpdateInterval)
+        while (_accumulatedDeltaTime >= _serverUpdateInterval)
         {
-            _accumulatedDeltaTime -= ServerUpdateInterval;
+            _accumulatedDeltaTime -= _serverUpdateInterval;
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
             var input = GetInput();
             _inputStateCache[cacheIndex] = input;

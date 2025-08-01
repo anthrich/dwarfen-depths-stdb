@@ -7,5 +7,5 @@
 public interface ISubscriber<T>
 {
     public int GetInstanceID();
-    void SubscriptionUpdate(T message);
+    void SubscriptionUpdate(T update);
 }

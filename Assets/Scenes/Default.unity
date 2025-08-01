@@ -2457,7 +2457,7 @@ MonoBehaviour:
       m_DotLength: 2
       m_GapLength: 2
     m_Symbol:
-      m_Show: 1
+      m_Show: 0
       m_Type: 3
       m_Size: 0
       m_Gap: 0

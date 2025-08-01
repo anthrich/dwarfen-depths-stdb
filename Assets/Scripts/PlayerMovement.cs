@@ -1,13 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using SpacetimeDB.Types;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Input = SpacetimeDB.Types.Input;
 
-public class PlayerMovement : MonoBehaviour, IPublisher<double[]>
+public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
 {
     public Transform cameraTransform;
     public EntityInterpolation entityInterpolation;
@@ -27,11 +25,10 @@ public class PlayerMovement : MonoBehaviour, IPublisher<double[]>
     private ulong _lastCorrectedSequenceId;
     private float _yPosition;
     private DateTimeOffset _lastServerUpdateAt;
-    private List<ISubscriber<double[]>> _entitySubscribers = new();
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
-    private readonly List<double> _serverUpdateLatencyCache = new();
+    private readonly UpdateRateCache _updateRateCache = new(30);
 
     public struct InputState
     {
@@ -59,35 +56,16 @@ public class PlayerMovement : MonoBehaviour, IPublisher<double[]>
         entityInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
-        InvokeRepeating(nameof(ReportAverageServerUpdateTime), 1f, 1f);
     }
     
-    public void Subscribe(ISubscriber<double[]> subscriber)
+    public void Subscribe(ISubscriber<UpdateRateCache> subscriber)
     {
-        _entitySubscribers.Add(subscriber);
+        _updateRateCache.Subscribe(subscriber);
     }
 
     public void Unsubscribe(int instanceId)
     {
-        var subscriber = _entitySubscribers.FirstOrDefault(s => s.GetInstanceID() == instanceId);
-        if(subscriber != null) _entitySubscribers.Remove(subscriber);
-    }
-
-    void ReportAverageServerUpdateTime()
-    {
-        while (_serverUpdateLatencyCache.Count > 30)
-        {
-            _serverUpdateLatencyCache.RemoveAt(0);
-        }
-        
-        foreach (var entitySubscriber in _entitySubscribers)
-        {
-            entitySubscriber.SubscriptionUpdate(_serverUpdateLatencyCache.ToArray());
-        }
-        
-        Debug.Log($"Average MS between server updates: {_serverUpdateLatencyCache.Average()}".WithRTColour("#2d94bc"));
-        Debug.Log($"Max MS between server updates: {_serverUpdateLatencyCache.Max()}".WithRTColour("#cc6c51"));
-        Debug.Log($"Min MS between server updates: {_serverUpdateLatencyCache.Min()}".WithRTColour("#63c958"));
+        _updateRateCache.Unsubscribe(instanceId);
     }
 
     public void OnEntitySpawned(Entity newServerEntityState)
@@ -106,7 +84,10 @@ public class PlayerMovement : MonoBehaviour, IPublisher<double[]>
         
         var diff = DateTimeOffset.Now - _lastServerUpdateAt;
         _lastServerUpdateAt = DateTimeOffset.Now;
-        _serverUpdateLatencyCache.Add(diff.TotalMilliseconds);
+        _updateRateCache.AddToStream(
+            "server-update-rate",
+            new UpdateRateCache.Entry { Rate = diff.TotalMilliseconds, SequenceId = newServerEntityState.SequenceId }
+        );
         _serverEntityState = newServerEntityState;
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
     }

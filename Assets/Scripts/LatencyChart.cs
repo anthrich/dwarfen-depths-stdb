@@ -8,6 +8,7 @@ public class LatencyChart : MonoBehaviour, ISubscriber<UpdateRateCache>
     public LineChart lineChart;
     private bool _isInitialized;
     private XAxis _xAxis;
+    private Legend _legend;
 
     private void Start()
     {
@@ -16,6 +17,7 @@ public class LatencyChart : MonoBehaviour, ISubscriber<UpdateRateCache>
         _xAxis = lineChart.GetChartComponent<XAxis>();
         _xAxis.minMaxType = Axis.AxisMinMaxType.MinMax;
         _xAxis.interval = 1;
+        _legend = lineChart.GetChartComponent<Legend>();
     }
 
     private void Initialize(UpdateRateCache cache)

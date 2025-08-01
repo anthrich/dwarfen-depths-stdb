@@ -83,18 +83,18 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         var modifier = Mathf.Clamp(0.01f + Math.Abs(sequenceDiff) * 0.002f, 0.01f, 0.03f);
         switch (sequenceDiff)
         {
-            case > 7:
-                _deltaTimeMultiplier -= 0.01f + modifier;
+            case > 5:
+                Time.timeScale -= 0.01f + modifier;
                 break;
             case < 3:
-                _deltaTimeMultiplier += 0.01f + modifier;
+                Time.timeScale += 0.01f + modifier;
                 break;
             default:
-                _deltaTimeMultiplier = 1f;
+                Time.timeScale = 1f;
                 break;
         }
         
-        _deltaTimeMultiplier = Mathf.Clamp(_deltaTimeMultiplier, 0.8f, 1.2f);
+        Time.timeScale = Mathf.Clamp(Time.timeScale, 0.8f, 1.2f);
     }
 
     [UsedImplicitly]

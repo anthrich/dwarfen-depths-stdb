@@ -8,7 +8,6 @@ public static partial class Module
         [PrimaryKey]
         public uint Id;
         public ulong WorldSize;
-        public float UpdateEntityTickRate;
         public float UpdateEntityInterval;
     }
     
@@ -70,8 +69,7 @@ public static partial class Module
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
-        config.UpdateEntityTickRate = 0.01f;
-        config.UpdateEntityInterval = 0.05f;
+        config.UpdateEntityInterval = 0.1f;
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;
@@ -79,7 +77,7 @@ public static partial class Module
         
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
         {
-            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityTickRate))
+            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 3))
         });
     }
 

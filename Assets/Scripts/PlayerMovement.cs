@@ -22,6 +22,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     private float SpeedPerInterval => MovementSpeed * _serverUpdateInterval;
     private Vector2 _movement = Vector2.zero;
     private float _accumulatedDeltaTime;
+    private float _deltaTimeMultiplier = 1f;
     private ulong _currentSequenceId;
     private Entity _serverEntityState = new();
     private ulong _lastCorrectedSequenceId;
@@ -77,6 +78,23 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         );
         _serverEntityState = newServerEntityState;
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
+        
+        var sequenceDiff = (long)_currentSequenceId - (long)_serverEntityState.SequenceId;
+        var modifier = Mathf.Clamp(0.01f + Math.Abs(sequenceDiff) * 0.002f, 0.01f, 0.03f);
+        switch (sequenceDiff)
+        {
+            case > 7:
+                _deltaTimeMultiplier -= 0.01f + modifier;
+                break;
+            case < 3:
+                _deltaTimeMultiplier += 0.01f + modifier;
+                break;
+            default:
+                _deltaTimeMultiplier = 1f;
+                break;
+        }
+        
+        _deltaTimeMultiplier = Mathf.Clamp(_deltaTimeMultiplier, 0.8f, 1.2f);
     }
 
     [UsedImplicitly]
@@ -100,7 +118,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
 
     private void Update()
     {
-        _accumulatedDeltaTime += Time.deltaTime;
+        _accumulatedDeltaTime += Time.deltaTime * _deltaTimeMultiplier;
         var canonicalPosition = entityInterpolation.GetCanonicalPosition();
         
         while (_accumulatedDeltaTime >= _serverUpdateInterval)
@@ -147,7 +165,8 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     private void SendInput()
     {
         var direction = new DbVector2(_movement.x, _movement.y);
-        GameManager.Conn.Reducers.UpdatePlayerInput(new Input(_currentSequenceId, direction));
+        GameManager.Conn.Reducers
+            .UpdatePlayerInput(new Input(_currentSequenceId, direction));
     }
     
     private InputState GetInput()

@@ -29,24 +29,19 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         PlayerPrefs.DeleteAll();
-        // In order to build a connection to SpacetimeDB we need to register
-        // our callbacks and specify a SpacetimeDB server URI and module name.
+
         var builder = DbConnection.Builder()
             .OnConnect(HandleConnect)
             .OnConnectError(HandleConnectError)
             .OnDisconnect(HandleDisconnect)
             .WithUri(ServerURL)
             .WithModuleName(ModuleName);
-
-        // If the user has a SpacetimeDB auth token stored in the Unity PlayerPrefs,
-        // we can use it to authenticate the connection.
+        
         if (AuthToken.Token != "")
         {
             builder = builder.WithToken(AuthToken.Token);
         }
-
-        // Building the connection will establish a connection to the SpacetimeDB
-        // server.
+        
         Conn = builder.Build();
     }
 

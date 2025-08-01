@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using UnityEngine;
 
 public static class StringExtensions
 {
@@ -11,6 +12,19 @@ public static class StringExtensions
     {
         StringBuilder.Append(TagOpenStart);
         StringBuilder.Append(colour);
+        StringBuilder.Append(TagOpenEnd);
+        StringBuilder.Append(str);
+        StringBuilder.Append(TagClose);
+        str = StringBuilder.ToString();
+        StringBuilder.Clear();
+        return str;
+    }
+    
+    public static string WithRTColour(this string str, Color colour)
+    {
+        StringBuilder.Append(TagOpenStart);
+        StringBuilder.Append("#");
+        StringBuilder.Append(ColorUtility.ToHtmlStringRGB(colour));
         StringBuilder.Append(TagOpenEnd);
         StringBuilder.Append(str);
         StringBuilder.Append(TagClose);

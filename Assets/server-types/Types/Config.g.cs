@@ -19,21 +19,17 @@ namespace SpacetimeDB.Types
         public uint Id;
         [DataMember(Name = "WorldSize")]
         public ulong WorldSize;
-        [DataMember(Name = "UpdateEntityTickRate")]
-        public float UpdateEntityTickRate;
         [DataMember(Name = "UpdateEntityInterval")]
         public float UpdateEntityInterval;
 
         public Config(
             uint Id,
             ulong WorldSize,
-            float UpdateEntityTickRate,
             float UpdateEntityInterval
         )
         {
             this.Id = Id;
             this.WorldSize = WorldSize;
-            this.UpdateEntityTickRate = UpdateEntityTickRate;
             this.UpdateEntityInterval = UpdateEntityInterval;
         }
 

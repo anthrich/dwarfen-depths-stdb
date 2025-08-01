@@ -12,10 +12,11 @@ public class UpdateRateCache : IPublisher<UpdateRateCache>
         public ulong SequenceId;
     }
     
-    public UpdateRateCache(int capacity)
+    public UpdateRateCache(int capacity, string[] streamIds)
     {
         Capacity = capacity;
         Streams = new Dictionary<string, List<Entry>>();
+        streamIds.ToList().ForEach(streamId => Streams.Add(streamId, new List<Entry>()));
     }
     
     public Dictionary<string, List<Entry>> Streams { get; }
@@ -24,8 +25,7 @@ public class UpdateRateCache : IPublisher<UpdateRateCache>
     {
         if (!Streams.TryGetValue(key, out var stream))
         {
-            Streams.Add(key, new List<Entry>());
-            stream = Streams[key];
+            return;
         }
         
         stream.Add(value);

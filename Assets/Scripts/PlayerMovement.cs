@@ -13,11 +13,13 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     public bool applyReconciliation = true;
     public bool applyPrediction = true;
 
+    private const string ServerUpdateRateKey = "server-update-rate";
+    private const string ClientUpdateRateKey = "client-update-rate";
     private const int CacheSize = 1024;
+    
     private float _serverUpdateInterval;
     private float MovementSpeed => _serverEntityState.Speed;
     private float SpeedPerInterval => MovementSpeed * _serverUpdateInterval;
-    
     private Vector2 _movement = Vector2.zero;
     private float _accumulatedDeltaTime;
     private ulong _currentSequenceId;
@@ -25,29 +27,12 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     private ulong _lastCorrectedSequenceId;
     private float _yPosition;
     private DateTimeOffset _lastServerUpdateAt;
+    private DateTimeOffset _lastClientUpdateAt;
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
-    private readonly UpdateRateCache _updateRateCache = new(30);
+    private readonly UpdateRateCache _updateRateCache = new(30, new []{ ServerUpdateRateKey, ClientUpdateRateKey });
 
-    public struct InputState
-    {
-        public static bool IsDefault(InputState @is) =>
-            @is.Direction == Vector2.zero && @is.SequenceId == 0;
-        
-        public Vector2 Direction;
-        public ulong SequenceId;
-    }
-
-    public struct SimulationState
-    {
-        public static bool IsDefault(SimulationState simState) =>
-            simState.Position == Vector2.zero && simState.SequenceId == 0;
-        
-        public Vector2 Position;
-        public ulong SequenceId;
-    }
-    
     void Start()
     {
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
@@ -56,6 +41,8 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         entityInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
+        _lastServerUpdateAt = DateTimeOffset.Now;
+        _lastClientUpdateAt = DateTimeOffset.Now;
     }
     
     public void Subscribe(ISubscriber<UpdateRateCache> subscriber)
@@ -85,7 +72,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         var diff = DateTimeOffset.Now - _lastServerUpdateAt;
         _lastServerUpdateAt = DateTimeOffset.Now;
         _updateRateCache.AddToStream(
-            "server-update-rate",
+            ServerUpdateRateKey,
             new UpdateRateCache.Entry { Rate = diff.TotalMilliseconds, SequenceId = newServerEntityState.SequenceId }
         );
         _serverEntityState = newServerEntityState;
@@ -118,6 +105,16 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         
         while (_accumulatedDeltaTime >= _serverUpdateInterval)
         {
+            _updateRateCache.AddToStream(
+                ClientUpdateRateKey,
+                new UpdateRateCache.Entry
+                {
+                    Rate = (DateTimeOffset.Now - _lastClientUpdateAt).TotalMilliseconds,
+                    SequenceId = _currentSequenceId
+                }
+            );
+            
+            _lastClientUpdateAt = DateTimeOffset.Now;
             _accumulatedDeltaTime -= _serverUpdateInterval;
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
             var input = GetInput();
@@ -132,6 +129,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
                 canonicalPosition = ApplyDirection(input.Direction, canonicalPosition);
             }
             SendInput();
+            
             _currentSequenceId++;
         }
         

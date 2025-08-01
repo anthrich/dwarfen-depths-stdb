@@ -1,8 +1,8 @@
-using System;
 using System.Linq;
 using UnityEngine;
 using XCharts.Runtime;
 
+[RequireComponent(typeof(LineChart))]
 public class LatencyChart : MonoBehaviour, ISubscriber<UpdateRateCache>
 {
     public LineChart lineChart;

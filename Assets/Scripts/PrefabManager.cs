@@ -35,6 +35,11 @@ public class PrefabManager : MonoBehaviour
             playerMovement.Subscribe(_instance.latencyChart);
             entityController.GetComponent<PlayerInput>().enabled = true;
         }
+        else
+        {
+            var serverEntityMovement = entityController.gameObject.AddComponent<ServerEntityMovement>();
+            serverEntityMovement.Init(entity);
+        }
 
         return entityController;
     }

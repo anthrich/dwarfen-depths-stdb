@@ -1067,9 +1067,9 @@ RectTransform:
   - {fileID: 424252645}
   - {fileID: 991810179}
   - {fileID: 1007274399}
-  - {fileID: 1359611260}
-  - {fileID: 1209818424}
   - {fileID: 735098122}
+  - {fileID: 1209818424}
+  - {fileID: 1359611260}
   - {fileID: 771406044}
   m_Father: {fileID: 882912809}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -17495,7 +17495,7 @@ TerrainCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
+  m_ProvidesContacts: 1
   m_Enabled: 1
   serializedVersion: 2
   m_TerrainData: {fileID: 15600000, guid: d1b5ca7a52be0be47b0f156c0cb1a77e, type: 2}

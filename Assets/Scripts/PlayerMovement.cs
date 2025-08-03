@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using SpacetimeDB.Types;
 using UnityEngine;
@@ -32,6 +33,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     
     private readonly SimulationState[] _simulationStateCache = new SimulationState[CacheSize];
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
+    private readonly List<Input> _inputsAheadOfSimulation = new();
     private readonly UpdateRateCache _updateRateCache = new(30, new []{ ServerUpdateRateKey, ClientUpdateRateKey });
 
     void Start()
@@ -77,16 +79,17 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
             new UpdateRateCache.Entry { Rate = diff.TotalMilliseconds, SequenceId = newServerEntityState.SequenceId }
         );
         _serverEntityState = newServerEntityState;
+        _inputsAheadOfSimulation.RemoveAll(i => i.SequenceId <= _serverEntityState.SequenceId);
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
         
         var sequenceDiff = (long)_currentSequenceId - (long)_serverEntityState.SequenceId;
         var modifier = Mathf.Clamp(0.01f + Math.Abs(sequenceDiff) * 0.002f, 0.01f, 0.03f);
         switch (sequenceDiff)
         {
-            case > 5:
+            case > 3:
                 Time.timeScale -= 0.01f + modifier;
                 break;
-            case < 3:
+            case < 2:
                 Time.timeScale += 0.01f + modifier;
                 break;
             default:
@@ -164,9 +167,8 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
 
     private void SendInput()
     {
-        var direction = new DbVector2(_movement.x, _movement.y);
-        GameManager.Conn.Reducers
-            .UpdatePlayerInput(new Input(_currentSequenceId, direction));
+        _inputsAheadOfSimulation.Add(new Input(_currentSequenceId, new DbVector2(_movement.x, _movement.y)));
+        GameManager.Conn.Reducers.UpdatePlayerInput(_inputsAheadOfSimulation);
     }
     
     private InputState GetInput()

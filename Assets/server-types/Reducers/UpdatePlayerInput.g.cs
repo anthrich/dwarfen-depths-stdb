@@ -14,12 +14,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, Input input);
+        public delegate void UpdatePlayerInputHandler(ReducerEventContext ctx, System.Collections.Generic.List<Input> inputs);
         public event UpdatePlayerInputHandler? OnUpdatePlayerInput;
 
-        public void UpdatePlayerInput(Input input)
+        public void UpdatePlayerInput(System.Collections.Generic.List<Input> inputs)
         {
-            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(input), this.SetCallReducerFlags.UpdatePlayerInputFlags);
+            conn.InternalCallReducer(new Reducer.UpdatePlayerInput(inputs), this.SetCallReducerFlags.UpdatePlayerInputFlags);
         }
 
         public bool InvokeUpdatePlayerInput(ReducerEventContext ctx, Reducer.UpdatePlayerInput args)
@@ -38,7 +38,7 @@ namespace SpacetimeDB.Types
             }
             OnUpdatePlayerInput(
                 ctx,
-                args.Input
+                args.Inputs
             );
             return true;
         }
@@ -50,17 +50,17 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class UpdatePlayerInput : Reducer, IReducerArgs
         {
-            [DataMember(Name = "input")]
-            public Input Input;
+            [DataMember(Name = "inputs")]
+            public System.Collections.Generic.List<Input> Inputs;
 
-            public UpdatePlayerInput(Input Input)
+            public UpdatePlayerInput(System.Collections.Generic.List<Input> Inputs)
             {
-                this.Input = Input;
+                this.Inputs = Inputs;
             }
 
             public UpdatePlayerInput()
             {
-                this.Input = new();
+                this.Inputs = new();
             }
 
             string IReducerArgs.ReducerName => "UpdatePlayerInput";

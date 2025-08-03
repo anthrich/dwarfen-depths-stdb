@@ -19,22 +19,22 @@ namespace SpacetimeDB.Types
         public ulong Id;
         [DataMember(Name = "PlayerId")]
         public uint PlayerId;
-        [DataMember(Name = "Direction")]
-        public DbVector2 Direction;
         [DataMember(Name = "SequenceId")]
         public ulong SequenceId;
+        [DataMember(Name = "Direction")]
+        public DbVector2 Direction;
 
         public PlayerInput(
             ulong Id,
             uint PlayerId,
-            DbVector2 Direction,
-            ulong SequenceId
+            ulong SequenceId,
+            DbVector2 Direction
         )
         {
             this.Id = Id;
             this.PlayerId = PlayerId;
-            this.Direction = Direction;
             this.SequenceId = SequenceId;
+            this.Direction = Direction;
         }
 
         public PlayerInput()

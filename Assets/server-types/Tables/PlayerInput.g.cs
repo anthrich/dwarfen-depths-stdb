@@ -28,6 +28,15 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class PlayerIdSequenceIdIndex : BTreeIndexBase<(uint PlayerId, ulong SequenceId)>
+            {
+                protected override (uint PlayerId, ulong SequenceId) GetKey(PlayerInput row) => (row.PlayerId, row.SequenceId);
+
+                public PlayerIdSequenceIdIndex(PlayerInputHandle table) : base(table) { }
+            }
+
+            public readonly PlayerIdSequenceIdIndex PlayerIdSequenceId;
+
             public sealed class PlayerIdIndex : BTreeIndexBase<uint>
             {
                 protected override uint GetKey(PlayerInput row) => row.PlayerId;
@@ -49,6 +58,7 @@ namespace SpacetimeDB.Types
             internal PlayerInputHandle(DbConnection conn) : base(conn)
             {
                 Id = new(this);
+                PlayerIdSequenceId = new(this);
                 PlayerId = new(this);
                 SequenceId = new(this);
             }

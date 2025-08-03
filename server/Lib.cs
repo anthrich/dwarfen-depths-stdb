@@ -1,4 +1,5 @@
 using SpacetimeDB;
+using Index = SpacetimeDB.Index;
 
 public static partial class Module
 {
@@ -43,19 +44,28 @@ public static partial class Module
     }
 
     [Table(Name = "PlayerInput", Public = false)]
+    [Index.BTree(Name = "PlayerId_SequenceId", Columns = [nameof(PlayerId), nameof(SequenceId)])]
     public partial struct PlayerInput
     {
         [PrimaryKey]
         [AutoInc]
         public ulong Id;
-        [SpacetimeDB.Index.BTree]
+        
+        [Index.BTree]
         public uint PlayerId;
-        public DbVector2 Direction;
-        [SpacetimeDB.Index.BTree]
+        
+        [Index.BTree]
         public ulong SequenceId;
+        
+        public DbVector2 Direction;
     }
     
-    [Table(Name = "moveAllEntitiesTimer", Scheduled = nameof(MoveAllEntities), ScheduledAt = nameof(ScheduledAt))]
+    [Table(
+        Name = "moveAllEntitiesTimer",
+        Public = false,
+        Scheduled = nameof(MoveAllEntities),
+        ScheduledAt = nameof(ScheduledAt)
+    )]
     public partial struct MoveAllEntitiesTimer
     {
         [PrimaryKey, AutoInc]
@@ -69,15 +79,15 @@ public static partial class Module
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
-        config.UpdateEntityInterval = 0.075f;
+        config.UpdateEntityInterval = 0.05f;
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;
         ctx.Db.EntityUpdate.Id.Update(entityUpdate);
-        
+        ctx.Db.moveAllEntitiesTimer.ScheduledId.Delete(0);
         ctx.Db.moveAllEntitiesTimer.Insert(new MoveAllEntitiesTimer
         {
-            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 3))
+            ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 4))
         });
     }
 
@@ -115,17 +125,21 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void UpdatePlayerInput(ReducerContext ctx, Input input)
+    public static void UpdatePlayerInput(ReducerContext ctx, Input[] inputs)
     {
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        ctx.Db.PlayerInput.Insert(
-            new PlayerInput
-            {
-                PlayerId = player.PlayerId,
-                Direction = input.Direction,
-                SequenceId = input.SequenceId
-            }
-        );
+        foreach (var input in inputs)
+        {
+            ctx.Db.PlayerInput.PlayerId_SequenceId.Delete((player.PlayerId, input.SequenceId));
+            ctx.Db.PlayerInput.Insert(
+                new PlayerInput
+                {
+                    PlayerId = player.PlayerId,
+                    Direction = input.Direction,
+                    SequenceId = input.SequenceId,
+                }
+            );
+        }
     }
 
     [Reducer]

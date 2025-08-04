@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using SpacetimeDB.Types;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class NetworkTime : MonoBehaviour
 {

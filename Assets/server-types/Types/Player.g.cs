@@ -21,21 +21,30 @@ namespace SpacetimeDB.Types
         public uint PlayerId;
         [DataMember(Name = "Name")]
         public string Name;
+        [DataMember(Name = "Position")]
+        public DbVector2 Position;
+        [DataMember(Name = "SimulationOffset")]
+        public sbyte SimulationOffset;
 
         public Player(
             SpacetimeDB.Identity Identity,
             uint PlayerId,
-            string Name
+            string Name,
+            DbVector2 Position,
+            sbyte SimulationOffset
         )
         {
             this.Identity = Identity;
             this.PlayerId = PlayerId;
             this.Name = Name;
+            this.Position = Position;
+            this.SimulationOffset = SimulationOffset;
         }
 
         public Player()
         {
             this.Name = "";
+            this.Position = new();
         }
     }
 }

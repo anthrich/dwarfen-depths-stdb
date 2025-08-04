@@ -42,9 +42,9 @@ public class UpdateRateCache : IPublisher<UpdateRateCache>
         _updateRateSubscribers.Add(subscriber);
     }
 
-    public void Unsubscribe(int instanceId)
+    public void Unsubscribe(ISubscriber<UpdateRateCache> subscriber)
     {
-        var subscriber = _updateRateSubscribers.FirstOrDefault(s => s.GetInstanceID() == instanceId);
-        if(subscriber != null) _updateRateSubscribers.Remove(subscriber);
+        var containsSubscriber = _updateRateSubscribers.Contains(subscriber);
+        if(containsSubscriber) _updateRateSubscribers.Remove(subscriber);
     }
 }

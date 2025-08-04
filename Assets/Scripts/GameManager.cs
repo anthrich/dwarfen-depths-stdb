@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using SpacetimeDB;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+[RequireComponent(typeof(NetworkTime))]
 public class GameManager : MonoBehaviour
 {
     public CinemachineCamera cinemachineCamera;
+    public NetworkTime networkTime;
     
     const string ServerURL = "http://127.0.0.1:3000";
     const string ModuleName = "spacetimer";
@@ -43,6 +46,8 @@ public class GameManager : MonoBehaviour
         }
         
         Conn = builder.Build();
+
+        if (!networkTime) networkTime = GetComponent<NetworkTime>();
     }
 
     public void JoinGame()
@@ -56,15 +61,13 @@ public class GameManager : MonoBehaviour
         Debug.Log("Connected.");
         AuthToken.SaveToken(token);
         LocalIdentity = identity;
-        Debug.Log(conn.Db.Config.Count);
-        conn.Db.Config.OnInsert += ConfigOnInsert;
-        conn.Db.Entity.OnInsert += EntityOnInsert;
-        conn.Db.Entity.OnUpdate += EntityOnUpdate;
-        conn.Db.Entity.OnDelete += EntityOnDelete;
-        conn.Db.Player.OnInsert += PlayerOnInsert;
-        conn.Db.Player.OnDelete += PlayerOnDelete;
-
-        OnConnected?.Invoke();
+        conn.Db.Config.OnInsert += OnConfigInserted;
+        conn.Db.Entity.OnInsert += OnEntityInserted;
+        conn.Db.Entity.OnUpdate += OnEntityUpdated;
+        conn.Db.Entity.OnDelete += OnEntityDeleted;
+        conn.Db.Player.OnInsert += OnPlayerInserted;
+        conn.Db.Player.OnUpdate += OnPlayerUpdated;
+        conn.Db.Player.OnDelete += OnPlayerDeleted;
 
         // Request all tables
         Conn.SubscriptionBuilder()
@@ -103,13 +106,13 @@ public class GameManager : MonoBehaviour
         Conn = null;
     }
     
-    private static void ConfigOnInsert(EventContext context, Config insertedValue)
+    private static void OnConfigInserted(EventContext context, Config insertedValue)
     {
         Debug.Log($"Got config: {insertedValue}");
         Config = insertedValue;
     }
     
-    private static void EntityOnInsert(EventContext context, Entity insertedValue)
+    private static void OnEntityInserted(EventContext context, Entity insertedValue)
     {
         var player = GetOrCreatePlayer(insertedValue.EntityId);
         var entityController = PrefabManager.SpawnEntity(insertedValue, player);
@@ -122,7 +125,7 @@ public class GameManager : MonoBehaviour
         Entities.Add(insertedValue.EntityId, entityController);
     }
     
-    private static void EntityOnUpdate(EventContext context, Entity oldEntity, Entity newEntity)
+    private static void OnEntityUpdated(EventContext context, Entity oldEntity, Entity newEntity)
     {
         if (!Entities.TryGetValue(newEntity.EntityId, out var entityController))
         {
@@ -132,7 +135,7 @@ public class GameManager : MonoBehaviour
         entityController.SendMessage("OnEntityUpdated", newEntity);
     }
 
-    private static void EntityOnDelete(EventContext context, Entity oldEntity)
+    private static void OnEntityDeleted(EventContext context, Entity oldEntity)
     {
         if (Entities.Remove(oldEntity.EntityId, out var entityController))
         {
@@ -140,17 +143,22 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    private static void PlayerOnInsert(EventContext context, Player insertedPlayer)
+    private static void OnPlayerInserted(EventContext context, Player insertedPlayer)
     {
         GetOrCreatePlayer(insertedPlayer.PlayerId);
     }
 
-    private static void PlayerOnDelete(EventContext context, Player deletedvalue)
+    private static void OnPlayerDeleted(EventContext context, Player deletedvalue)
     {
         if (Players.Remove(deletedvalue.PlayerId, out var playerController))
         {
             Destroy(playerController.gameObject);
         }
+    }
+
+    private static void OnPlayerUpdated(EventContext context, Player oldPlayer, Player newPlayer)
+    {
+        Instance.SendMessage("OnPlayerUpdated", newPlayer);
     }
     
     private static PlayerController GetOrCreatePlayer(uint playerId)

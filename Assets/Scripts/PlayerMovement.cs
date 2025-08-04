@@ -6,7 +6,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Input = SpacetimeDB.Types.Input;
 
-public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
+public class PlayerMovement :
+    MonoBehaviour,
+    IPublisher<UpdateRateCache>,
+    IPublisher<InputState>
 {
     public Transform cameraTransform;
     public EntityInterpolation entityInterpolation;
@@ -35,6 +38,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
     private readonly InputState[] _inputStateCache = new InputState[CacheSize];
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private readonly UpdateRateCache _updateRateCache = new(30, new []{ ServerUpdateRateKey, ClientUpdateRateKey });
+    private readonly List<ISubscriber<InputState>> _inputStateSubscribers = new();
 
     void Start()
     {
@@ -53,9 +57,19 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         _updateRateCache.Subscribe(subscriber);
     }
 
-    public void Unsubscribe(int instanceId)
+    public void Unsubscribe(ISubscriber<UpdateRateCache> subscriber)
     {
-        _updateRateCache.Unsubscribe(instanceId);
+        _updateRateCache.Unsubscribe(subscriber);
+    }
+    
+    public void Subscribe(ISubscriber<InputState> subscriber)
+    {
+        _inputStateSubscribers.Add(subscriber);
+    }
+
+    public void Unsubscribe(ISubscriber<InputState> subscriber)
+    {
+        if(_inputStateSubscribers.Contains(subscriber)) _inputStateSubscribers.Remove(subscriber);
     }
 
     public void OnEntitySpawned(Entity newServerEntityState)
@@ -81,23 +95,6 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         _serverEntityState = newServerEntityState;
         _inputsAheadOfSimulation.RemoveAll(i => i.SequenceId <= _serverEntityState.SequenceId);
         serverStateObject.position = newServerEntityState.Position.ToGamePosition(_yPosition);
-        
-        var sequenceDiff = (long)_currentSequenceId - (long)_serverEntityState.SequenceId;
-        var modifier = Mathf.Clamp(0.01f + Math.Abs(sequenceDiff) * 0.002f, 0.01f, 0.03f);
-        switch (sequenceDiff)
-        {
-            case > 3:
-                Time.timeScale -= 0.01f + modifier;
-                break;
-            case < 2:
-                Time.timeScale += 0.01f + modifier;
-                break;
-            default:
-                Time.timeScale = 1f;
-                break;
-        }
-        
-        Time.timeScale = Mathf.Clamp(Time.timeScale, 0.8f, 1.2f);
     }
 
     [UsedImplicitly]
@@ -149,7 +146,7 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
             {
                 canonicalPosition = ApplyDirection(input.Direction, canonicalPosition);
             }
-            SendInput();
+            SendInput(input);
             
             _currentSequenceId++;
         }
@@ -165,10 +162,14 @@ public class PlayerMovement : MonoBehaviour, IPublisher<UpdateRateCache>
         return targetPosition + new Vector3(movement.x, 0, movement.y);
     }
 
-    private void SendInput()
+    private void SendInput(InputState inputState)
     {
-        _inputsAheadOfSimulation.Add(new Input(_currentSequenceId, new DbVector2(_movement.x, _movement.y)));
+        _inputsAheadOfSimulation.Add(new Input(inputState.SequenceId, inputState.Direction.ToDbVector2()));
         GameManager.Conn.Reducers.UpdatePlayerInput(_inputsAheadOfSimulation);
+        foreach (var inputStateSubscriber in _inputStateSubscribers)
+        {
+            inputStateSubscriber.SubscriptionUpdate(inputState);
+        }
     }
     
     private InputState GetInput()

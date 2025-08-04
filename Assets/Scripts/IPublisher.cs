@@ -1,7 +1,7 @@
 ﻿public interface IPublisher<T>
 {
     void Subscribe(ISubscriber<T> subscriber);
-    void Unsubscribe(int instanceId);
+    void Unsubscribe(ISubscriber<T> subscriber);
 }
 
 public interface ISubscriber<T>

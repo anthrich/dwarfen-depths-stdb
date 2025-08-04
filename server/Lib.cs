@@ -12,7 +12,7 @@ public static partial class Module
         public float UpdateEntityInterval;
     }
     
-    [Table(Name = "EntityUpdate", Public = false)]
+    [Table(Name = "EntityUpdate", Public = true)]
     public partial struct EntityUpdate
     {
         [PrimaryKey]
@@ -41,6 +41,8 @@ public static partial class Module
         [Unique, AutoInc]
         public uint PlayerId;
         public string Name;
+        public DbVector2 Position;
+        public sbyte SimulationOffset;
     }
 
     [Table(Name = "PlayerInput", Public = false)]
@@ -140,6 +142,11 @@ public static partial class Module
                 }
             );
         }
+
+        var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("Entity update not found");
+        player.SimulationOffset =
+            Convert.ToSByte((long)inputs.LastOrDefault().SequenceId - (long)entityUpdate.SequenceId);
+        ctx.Db.Player.PlayerId.Update(player);
     }
 
     [Reducer]
@@ -192,15 +199,11 @@ public static partial class Module
         Config config)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
-        
-        if (hasInput)
-        {
-            var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
-            var newPos = entity.Position + playerInput.Direction * movementPerInterval;
-            entity.Position.X = Math.Clamp(newPos.X, 0, config.WorldSize);
-            entity.Position.Y= Math.Clamp(newPos.Y, 0, config.WorldSize);
-        }
-        
+        var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
+        var direction = hasInput ? playerInput.Direction : entity.Direction;
+        entity.Position += direction * movementPerInterval;
+        entity.Position.X = Math.Clamp(entity.Position.X, 0, config.WorldSize);
+        entity.Position.Y= Math.Clamp(entity.Position.Y, 0, config.WorldSize);
         entity.SequenceId = sequenceId;
         return entity;
     }

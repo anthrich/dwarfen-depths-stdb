@@ -7028,7 +7028,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 670.75, y: -339.125}
+  m_AnchoredPosition: {x: 621.7, y: -339.125}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &448797341
@@ -11624,6 +11624,7 @@ GameObject:
   - component: {fileID: 882780449}
   - component: {fileID: 882780448}
   - component: {fileID: 882780451}
+  - component: {fileID: 882780452}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -11656,6 +11657,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cinemachineCamera: {fileID: 1049133714}
+  networkTime: {fileID: 882780452}
 --- !u!4 &882780450
 Transform:
   m_ObjectHideFlags: 0
@@ -11686,6 +11688,19 @@ MonoBehaviour:
   latencyChart: {fileID: 153528987}
   playerPrefab: {fileID: -2269470864599157433, guid: bb194b56652a1104480a5ae2cb051699, type: 3}
   entityPrefab: {fileID: -9117302646181658269, guid: 4bef38f4007a0ed449256e717c183c19, type: 3}
+--- !u!114 &882780452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882780447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2adf96725b949cfb6d22879bd0a1527, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeScale: 1
 --- !u!1 &882912805
 GameObject:
   m_ObjectHideFlags: 0
@@ -11754,7 +11769,7 @@ Canvas:
   m_GameObject: {fileID: 882912805}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0

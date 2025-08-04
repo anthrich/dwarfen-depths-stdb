@@ -81,7 +81,7 @@ public static partial class Module
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
         config.WorldSize = 100;
-        config.UpdateEntityInterval = 0.05f;
+        config.UpdateEntityInterval = 0.050f;
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;

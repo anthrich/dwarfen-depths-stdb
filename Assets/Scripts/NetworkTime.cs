@@ -5,24 +5,18 @@ using UnityEngine;
 public class NetworkTime : MonoBehaviour
 {
     public float timeScale = 1f;
+    public float adjustmentRate = 0.0025f;
 
     [UsedImplicitly]
     public void OnPlayerUpdated(Player newPlayer)
     {
-        switch (newPlayer.SimulationOffset)
+        timeScale = newPlayer.SimulationOffset switch
         {
-            case < 1:
-                timeScale += 0.01f;
-                break;
-            case > 5:
-                timeScale -= 0.01f;
-                break;
-            default:
-                timeScale = 1f;
-                break;
-        }
-        
-        timeScale = Mathf.Clamp(timeScale, 0.8f, 1.2f);
+            < 2 => Mathf.MoveTowards(timeScale, 1.2f, adjustmentRate),
+            > 2 => Mathf.MoveTowards(timeScale, 0.8f, adjustmentRate),
+            2 => 1f
+        };
+
         Time.timeScale = timeScale;
     }
 }

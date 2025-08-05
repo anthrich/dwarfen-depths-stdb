@@ -5,7 +5,8 @@ using UnityEngine;
 public class NetworkTime : MonoBehaviour
 {
     public float timeScale = 1f;
-    public float adjustmentRate = 0.0025f;
+    public float adjustmentRate = 0.001f;
+    public float targetTimeScale = 1f;
 
     [UsedImplicitly]
     public void OnPlayerUpdated(Player newPlayer)
@@ -13,8 +14,8 @@ public class NetworkTime : MonoBehaviour
         timeScale = newPlayer.SimulationOffset switch
         {
             < 2 => Mathf.MoveTowards(timeScale, 1.2f, adjustmentRate),
-            > 2 => Mathf.MoveTowards(timeScale, 0.8f, adjustmentRate),
-            2 => 1f
+            > 3 => Mathf.MoveTowards(timeScale, 0.8f, adjustmentRate),
+            _ => Mathf.MoveTowards(timeScale, targetTimeScale, adjustmentRate),
         };
 
         Time.timeScale = timeScale;

@@ -1,11 +1,12 @@
-﻿using JetBrains.Annotations;
+using System;
+using JetBrains.Annotations;
 using SpacetimeDB.Types;
 using UnityEngine;
 
 public class NetworkTime : MonoBehaviour
 {
     public float timeScale = 1f;
-    public float adjustmentRate = 0.001f;
+    public float adjustmentRate = 0.005f;
     public float targetTimeScale = 1f;
 
     [UsedImplicitly]
@@ -14,11 +15,14 @@ public class NetworkTime : MonoBehaviour
         if (newPlayer.PlayerId != GameManager.LocalPlayer.playerId) return;
         timeScale = newPlayer.SimulationOffset switch
         {
-            < 2 => Mathf.MoveTowards(timeScale, 1.2f, adjustmentRate * 2),
-            > 3 => Mathf.MoveTowards(timeScale, 0.8f, adjustmentRate),
-            _ => Mathf.MoveTowards(timeScale, targetTimeScale, adjustmentRate * 2),
+            < 2 => 1.2f,
+            > 3 => 0.8f,
+            _ => targetTimeScale,
         };
+    }
 
-        Time.timeScale = timeScale;
+    private void FixedUpdate()
+    {
+        Time.timeScale = Mathf.MoveTowards(Time.timeScale, timeScale, adjustmentRate);
     }
 }

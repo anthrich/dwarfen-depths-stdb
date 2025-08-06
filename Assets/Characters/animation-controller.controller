@@ -82,7 +82,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WalkForward
-  m_Speed: 1
+  m_Speed: 2.44
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 692161487115296656}
@@ -139,14 +139,14 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 4
     m_ConditionEvent: MovementSpeed
-    m_EventTreshold: 0.1
+    m_EventTreshold: 0.005
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -6803713682547904385}
   m_Solo: 0
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.25
+  m_TransitionDuration: 0.05
   m_TransitionOffset: 0
   m_ExitTime: 0.77272725
   m_HasExitTime: 0
@@ -164,14 +164,14 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 3
     m_ConditionEvent: MovementSpeed
-    m_EventTreshold: 0.1
+    m_EventTreshold: 0.005
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -3474958738607277425}
   m_Solo: 0
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.25
+  m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 0.9625
   m_HasExitTime: 0

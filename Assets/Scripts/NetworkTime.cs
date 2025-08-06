@@ -15,7 +15,7 @@ public class NetworkTime : MonoBehaviour
         {
             < 2 => Mathf.MoveTowards(timeScale, 1.2f, adjustmentRate),
             > 3 => Mathf.MoveTowards(timeScale, 0.8f, adjustmentRate),
-            _ => Mathf.MoveTowards(timeScale, targetTimeScale, adjustmentRate),
+            _ => Mathf.MoveTowards(timeScale, targetTimeScale, adjustmentRate * 2),
         };
 
         Time.timeScale = timeScale;

@@ -3,7 +3,7 @@
 public class EntityInterpolation : MonoBehaviour
 {
     public float lerpDuration = 0.1f;
-    public float rotationPerSecond = 90f;
+    public float rotationPerSecond = 33f;
     
     private float _lerpTime;
     private Vector3 _current;
@@ -21,7 +21,7 @@ public class EntityInterpolation : MonoBehaviour
         _previous = _current;
         _current = position;
         _lerpTime = 0.0f;
-        _movementDirection = (_current - _previous).normalized;
+        _movementDirection = (_current - transform.position).normalized;
     }
 
     public Vector3 GetCanonicalPosition()

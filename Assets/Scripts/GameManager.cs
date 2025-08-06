@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using SpacetimeDB;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [RequireComponent(typeof(NetworkTime))]
 public class GameManager : MonoBehaviour
 {
     public CinemachineCamera cinemachineCamera;
     public NetworkTime networkTime;
+    
+    public static readonly Dictionary<string, string> ServerChoices = new()
+    {
+        {"Local", "http://127.0.0.1:3000"}
+    };
     
     const string ServerURL = "http://127.0.0.1:3000";
     const string ModuleName = "spacetimer";
@@ -32,12 +35,16 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         PlayerPrefs.DeleteAll();
+        if (!networkTime) networkTime = GetComponent<NetworkTime>();
+    }
 
+    public void Connect(string server)
+    {
         var builder = DbConnection.Builder()
             .OnConnect(HandleConnect)
             .OnConnectError(HandleConnectError)
             .OnDisconnect(HandleDisconnect)
-            .WithUri(ServerURL)
+            .WithUri(ServerChoices[server])
             .WithModuleName(ModuleName);
         
         if (AuthToken.Token != "")
@@ -46,8 +53,6 @@ public class GameManager : MonoBehaviour
         }
         
         Conn = builder.Build();
-
-        if (!networkTime) networkTime = GetComponent<NetworkTime>();
     }
 
     public void JoinGame()
@@ -73,6 +78,8 @@ public class GameManager : MonoBehaviour
         Conn.SubscriptionBuilder()
             .OnApplied(HandleSubscriptionApplied)
             .SubscribeToAllTables();
+        
+        OnConnected?.Invoke();
     }
 
     void HandleConnectError(Exception ex)

@@ -1,0 +1,17 @@
+.server-dropdown {
+    display: flex;
+    flex-direction: column;
+    margin-left: 0;
+    margin-bottom: 12px;
+}
+
+.unity-base-popup-field__arrow {
+    -unity-background-image-tint-color: white;
+}
+
+.server-dropdown > .unity-base-field__input, .unity-button {
+    background-color: black;
+    border-color: rgb(100, 100, 100);
+    border-width: 1px;
+    border-radius: 12px;
+}

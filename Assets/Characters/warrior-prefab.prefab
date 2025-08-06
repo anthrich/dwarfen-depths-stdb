@@ -136,7 +136,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: cf4fb2c403a95a642836081837da53ea, type: 3}
       propertyPath: m_Name
-      value: warrior
+      value: warrior-prefab
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: cf4fb2c403a95a642836081837da53ea, type: 3}
       propertyPath: m_Controller

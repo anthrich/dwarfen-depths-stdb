@@ -1,12 +1,14 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EntityInterpolation : MonoBehaviour
 {
+    public float lerpDuration = 0.1f;
+    public float rotationPerSecond = 90f;
+    
     private float _lerpTime;
     private Vector3 _current;
     private Vector3 _previous;
-    public float lerpDuration = 0.1f;
+    private Vector3 _movementDirection;
 
     private void Start()
     {
@@ -19,6 +21,7 @@ public class EntityInterpolation : MonoBehaviour
         _previous = _current;
         _current = position;
         _lerpTime = 0.0f;
+        _movementDirection = (_current - _previous).normalized;
     }
 
     public Vector3 GetCanonicalPosition()
@@ -30,5 +33,10 @@ public class EntityInterpolation : MonoBehaviour
     {
         _lerpTime = Mathf.Min(_lerpTime + Time.deltaTime, lerpDuration);
         transform.position = Vector3.Lerp(_previous, _current, _lerpTime / lerpDuration);
+        if (_movementDirection.magnitude < 0.001f) return;
+        var newDirection = Vector3.RotateTowards(
+            transform.forward, _movementDirection, rotationPerSecond * Time.deltaTime, 0.0f
+        );
+        transform.rotation = Quaternion.LookRotation(newDirection);
     }
 }

@@ -9,9 +9,18 @@
     -unity-background-image-tint-color: white;
 }
 
-.server-dropdown > .unity-base-field__input, .unity-button {
+.server-dropdown > .unity-base-field__input {
     background-color: black;
     border-color: rgb(100, 100, 100);
     border-width: 1px;
     border-radius: 12px;
+    height: 48px;
+}
+
+.unity-button {
+    background-color: black;
+    border-color: rgb(100, 100, 100);
+    border-width: 1px;
+    border-radius: 12px;
+    height: 48px;
 }

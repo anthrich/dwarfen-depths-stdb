@@ -80,6 +80,8 @@ public class GameManager : MonoBehaviour
             .SubscribeToAllTables();
         
         OnConnected?.Invoke();
+        
+        Conn.Reducers.EnterGame("Player " + (Players.Count + 1));
     }
 
     void HandleConnectError(Exception ex)

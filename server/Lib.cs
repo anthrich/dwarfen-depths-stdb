@@ -202,6 +202,7 @@ public static partial class Module
         var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
         var direction = hasInput ? playerInput.Direction : entity.Direction;
         entity.Position += direction * movementPerInterval;
+        entity.Direction = direction;
         entity.Position.X = Math.Clamp(entity.Position.X, 0, config.WorldSize);
         entity.Position.Y= Math.Clamp(entity.Position.Y, 0, config.WorldSize);
         entity.SequenceId = sequenceId;

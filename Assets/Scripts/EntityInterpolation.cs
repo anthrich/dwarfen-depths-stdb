@@ -18,15 +18,19 @@ public class EntityInterpolation : MonoBehaviour
     public void SetCanonicalPosition(Vector3 position)
     {
         if(Vector3.Distance(position, _current) < 0.001f) return;
-        _previous = _current;
+        _previous = transform.position;
         _current = position;
         _lerpTime = 0.0f;
-        _movementDirection = (_current - transform.position).normalized;
     }
 
     public Vector3 GetCanonicalPosition()
     {
         return _current;
+    }
+
+    public void SetMovementDirection(Vector3 movementDirection)
+    {
+        _movementDirection = movementDirection.normalized;
     }
 
     public void Update()

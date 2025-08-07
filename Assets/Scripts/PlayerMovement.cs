@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Input = SpacetimeDB.Types.Input;
 
+[RequireComponent(typeof(EntityInterpolation))]
+[RequireComponent(typeof(EntityAnimator))]
 public class PlayerMovement :
     MonoBehaviour,
     IPublisher<UpdateRateCache>,
@@ -13,9 +15,8 @@ public class PlayerMovement :
 {
     public Transform cameraTransform;
     public EntityInterpolation entityInterpolation;
+    public EntityAnimator entityAnimator;
     public Transform serverStateObject;
-    public bool applyReconciliation = true;
-    public bool applyPrediction = true;
 
     private const string ServerUpdateRateKey = "server-update-rate";
     private const string ClientUpdateRateKey = "client-update-rate";
@@ -44,6 +45,7 @@ public class PlayerMovement :
     {
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
         if(entityInterpolation == default) entityInterpolation = GetComponent<EntityInterpolation>();
+        if(!entityAnimator) entityAnimator = GetComponent<EntityAnimator>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
         entityInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
@@ -142,18 +144,16 @@ public class PlayerMovement :
                 Position = new Vector2(canonicalPosition.x, canonicalPosition.z),
                 SequenceId = _currentSequenceId
             };
-            if (applyPrediction)
-            {
-                canonicalPosition = ApplyDirection(input.Direction, canonicalPosition);
-            }
+            canonicalPosition = ApplyDirection(input.Direction, canonicalPosition);
             SendInput(input);
-            
             _currentSequenceId++;
         }
         
-        if(applyReconciliation) canonicalPosition = Reconcile(canonicalPosition);
+        canonicalPosition = Reconcile(canonicalPosition);
         
         entityInterpolation.SetCanonicalPosition(canonicalPosition);
+        entityInterpolation.SetMovementDirection(_movement.ToGamePosition(canonicalPosition.y));
+        entityAnimator.SetDirection(_movement);
     }
     
     private Vector3 ApplyDirection(Vector2 direction, Vector3 targetPosition)
@@ -205,18 +205,13 @@ public class PlayerMovement :
                     ++rewindTick;
                     continue;
                 }
-
-                if (applyPrediction)
-                {
-                    canonicalPosition = ApplyDirection(rewoundInput.Direction, canonicalPosition);
-                }
                 
+                canonicalPosition = ApplyDirection(rewoundInput.Direction, canonicalPosition);
                 _simulationStateCache[rewindCacheIndex] = new SimulationState
                 {
                     Position = canonicalPosition,
                     SequenceId = rewindTick
                 };
-                
                 ++rewindTick;
             }
         }

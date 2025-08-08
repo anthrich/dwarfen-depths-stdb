@@ -28,9 +28,27 @@
                     "name": "Fire",
                     "type": "Button",
                     "id": "d86d3c07-8113-43bf-a1a3-f409e8c9271f",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Zoom",
+                    "type": "Value",
+                    "id": "283a3bf9-1828-4b87-816a-4d8fe0ed378b",
+                    "expectedControlType": "Delta",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "EnableLook",
+                    "type": "Button",
+                    "id": "3a54f9c7-ad8d-4b82-90c9-313472f37b1d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Hold(duration=0.01)",
                     "initialStateCheck": false
                 }
             ],
@@ -202,6 +220,17 @@
                 },
                 {
                     "name": "",
+                    "id": "b8e7b2b5-3c70-4a1c-8073-076ee3a71018",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "143bb1cd-cc10-4eca-a2f0-a3664166fe91",
                     "path": "<Gamepad>/rightTrigger",
                     "interactions": "",
@@ -252,6 +281,28 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "Fire",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "02e342fe-056b-4df3-ad27-7ea7791290a4",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse;Touch",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bef6b53e-24e5-4399-910a-c72a04ba37e9",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse;Touch",
+                    "action": "EnableLook",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

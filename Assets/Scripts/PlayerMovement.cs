@@ -25,6 +25,7 @@ public class PlayerMovement :
     private float _serverUpdateInterval;
     private float MovementSpeed => _serverEntityState.Speed;
     private float SpeedPerInterval => MovementSpeed * _serverUpdateInterval;
+    private Vector2 _movementInput = Vector2.zero;
     private Vector2 _movement = Vector2.zero;
     private float _accumulatedDeltaTime;
     private float _deltaTimeMultiplier = 1f;
@@ -102,20 +103,24 @@ public class PlayerMovement :
     [UsedImplicitly]
     private void OnMove(InputValue value)
     {
-        var movementVector = value.Get<Vector2>();
-        var newMovement = ApplyCameraHeading(movementVector);
-        if(newMovement.ApproximatesTo(_movement)) return;
-        _movement = newMovement;
+        var newInput = value.Get<Vector2>();
+        if(newInput.ApproximatesTo(_movementInput)) return;
+        _movementInput = newInput;
+        TransformMovementWithCamera();
     }
 
-    private Vector2 ApplyCameraHeading(Vector2 movementVector)
+    [UsedImplicitly]
+    private void OnLookApplied()
     {
-        var convertedVector3 =  new Vector3(movementVector.x, 0, movementVector.y);
-        var transformedMovement = cameraTransform.TransformDirection(convertedVector3);
+        TransformMovementWithCamera();
+    }
+
+    private void TransformMovementWithCamera()
+    {
+        var transformedMovement = cameraTransform.TransformDirection(_movementInput.ToGamePosition(_yPosition));
         transformedMovement.y = 0;
         transformedMovement = transformedMovement.normalized;
-        var newMovement = new Vector2(transformedMovement.x, transformedMovement.z);
-        return newMovement;
+        _movement = new Vector2(transformedMovement.x, transformedMovement.z);
     }
 
     private void Update()

@@ -44,7 +44,11 @@ public class PrefabManager : MonoBehaviour
         
         if (owner.isLocalPlayer)
         {
+            var playerInput = entityController.GetComponent<PlayerInput>();
+            playerInput.enabled = true;
             var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
+            var cameraMovement = entityController.gameObject.AddComponent<CameraMovement>();
+            cameraMovement.Init(GameManager.Instance.cinemachineCamera, playerInput);
             playerMovement.OnEntitySpawned(entity);
             playerMovement.Subscribe(_instance.latencyChart);
             entityController.GetComponent<PlayerInput>().enabled = true;

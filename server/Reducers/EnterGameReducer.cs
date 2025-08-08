@@ -14,14 +14,12 @@ public static partial class Module
     
     private static void SpawnPlayer(ReducerContext ctx, uint playerId)
     {
-        var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
-        var x = ctx.Rng.NextSingle() * config.WorldSize;
-        var y = ctx.Rng.NextSingle() * config.WorldSize;
+        var mapTile = ctx.Db.MapTile.Iter().First();
         ctx.Db.Entity.Insert(new Entity
         {
             EntityId = playerId,
-            Position = new DbVector2(x, y),
+            Position = mapTile.Position,
             Direction = new DbVector2(0,0),
             SequenceId = entityUpdate.SequenceId,
             Speed = 10f

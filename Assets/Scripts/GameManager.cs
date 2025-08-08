@@ -73,6 +73,7 @@ public class GameManager : MonoBehaviour
         conn.Db.Player.OnInsert += OnPlayerInserted;
         conn.Db.Player.OnUpdate += OnPlayerUpdated;
         conn.Db.Player.OnDelete += OnPlayerDeleted;
+        conn.Db.MapTile.OnInsert += OnMapTileInserted;
 
         // Request all tables
         Conn.SubscriptionBuilder()
@@ -113,6 +114,11 @@ public class GameManager : MonoBehaviour
     {
         Conn.Disconnect();
         Conn = null;
+    }
+
+    private static void OnMapTileInserted(EventContext context, MapTile tile)
+    {
+        PrefabManager.SpawnMapTile(tile);
     }
     
     private static void OnConfigInserted(EventContext context, Config insertedValue)

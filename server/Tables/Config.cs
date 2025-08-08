@@ -7,7 +7,7 @@ public static partial class Module
     {
         [PrimaryKey]
         public uint Id;
-        public ulong WorldSize;
+        public ulong RoomSize;
         public float UpdateEntityInterval;
     }
 }

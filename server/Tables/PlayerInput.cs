@@ -7,8 +7,7 @@ public static partial class Module
     [Index.BTree(Name = "PlayerId_SequenceId", Columns = [nameof(PlayerId), nameof(SequenceId)])]
     public partial struct PlayerInput
     {
-        [PrimaryKey]
-        [AutoInc]
+        [PrimaryKey, AutoInc]
         public ulong Id;
         
         [Index.BTree]

@@ -13,28 +13,33 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Config
+    public sealed partial class MapTile
     {
         [DataMember(Name = "Id")]
         public uint Id;
-        [DataMember(Name = "RoomSize")]
-        public ulong RoomSize;
-        [DataMember(Name = "UpdateEntityInterval")]
-        public float UpdateEntityInterval;
+        [DataMember(Name = "Position")]
+        public DbVector2 Position;
+        [DataMember(Name = "Width")]
+        public float Width;
+        [DataMember(Name = "Height")]
+        public float Height;
 
-        public Config(
+        public MapTile(
             uint Id,
-            ulong RoomSize,
-            float UpdateEntityInterval
+            DbVector2 Position,
+            float Width,
+            float Height
         )
         {
             this.Id = Id;
-            this.RoomSize = RoomSize;
-            this.UpdateEntityInterval = UpdateEntityInterval;
+            this.Position = Position;
+            this.Width = Width;
+            this.Height = Height;
         }
 
-        public Config()
+        public MapTile()
         {
+            this.Position = new();
         }
     }
 }

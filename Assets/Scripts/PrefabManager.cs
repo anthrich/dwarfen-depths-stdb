@@ -8,10 +8,24 @@ public class PrefabManager : MonoBehaviour
     public LatencyChart latencyChart;
     public PlayerController playerPrefab;
     public EntityController entityPrefab;
+    public MeshFilter floorMeshPrefab;
+    public GameObject mapContainer;
 
     private void Awake()
     {
         _instance = this;
+    }
+
+    public static void SpawnMapTile(MapTile tile)
+    {
+        MeshFilter meshFilter = Instantiate(_instance.floorMeshPrefab, _instance.mapContainer.transform);
+        Bounds bounds = meshFilter.mesh.bounds;
+        float originalWidth = bounds.size.x;
+        float originalLength = bounds.size.z;
+
+        Vector3 scale = new Vector3(tile.Width / originalWidth, 1f, tile.Height / originalLength);
+        meshFilter.transform.localScale = scale;
+        meshFilter.transform.position = tile.Position.ToGamePosition(0);
     }
 
     public static PlayerController SpawnPlayer(Player player)

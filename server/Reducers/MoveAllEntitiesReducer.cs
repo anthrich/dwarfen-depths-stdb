@@ -23,6 +23,8 @@ public static partial class Module
                 .GroupBy(pi => pi.PlayerId)
                 .Select(grp => (grp.Key, grp.First()))
                 .ToDictionary();
+
+            var mapTiles = ctx.Db.MapTile.Iter().ToList();
             
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             var entities = ctx.Db.Entity.Iter().ToArray();
@@ -32,7 +34,11 @@ public static partial class Module
                 var checkEntityQuery = ctx.Db.Entity.EntityId.Find(entity.EntityId);
                 if (!checkEntityQuery.HasValue) continue;
                 var updateEntity = UpdateEntity(
-                    checkEntityQuery.Value, playerInputs, entityUpdate.SequenceId, config
+                    checkEntityQuery.Value,
+                    playerInputs,
+                    entityUpdate.SequenceId,
+                    config,
+                    mapTiles
                 );
                 ctx.Db.Entity.EntityId.Update(updateEntity);
             }
@@ -49,16 +55,30 @@ public static partial class Module
         Entity entity,
         Dictionary<uint, PlayerInput> playerInputs,
         ulong sequenceId,
-        Config config)
+        Config config,
+        List<MapTile> mapTiles)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
         var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
         var direction = hasInput ? playerInput.Direction : entity.Direction;
-        entity.Position += direction * movementPerInterval;
+        var targetPosition = entity.Position + direction * movementPerInterval;
+        
+        var targetIsInsideARoom = mapTiles.Any(mt => mt.PositionIsInside(targetPosition));
+        if (targetIsInsideARoom)
+        {
+            entity.Position = targetPosition;
+        }
+        
         entity.Direction = direction;
-        entity.Position.X = Math.Clamp(entity.Position.X, 0, config.WorldSize);
-        entity.Position.Y= Math.Clamp(entity.Position.Y, 0, config.WorldSize);
         entity.SequenceId = sequenceId;
         return entity;
+    }
+
+    private static bool PositionIsInside(this MapTile mapTile, DbVector2 position)
+    {
+        return mapTile.Position.X - mapTile.Width / 2 <= position.X &&
+               mapTile.Position.X + mapTile.Width / 2 > position.X &&
+               mapTile.Position.Y - mapTile.Height / 2 <= position.Y &&
+               mapTile.Position.Y + mapTile.Height / 2 > position.Y;
     }
 }

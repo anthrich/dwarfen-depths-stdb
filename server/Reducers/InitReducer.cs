@@ -7,7 +7,7 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
         var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
-        config.WorldSize = 100;
+        config.RoomSize = 10;
         config.UpdateEntityInterval = 0.050f;
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
@@ -18,5 +18,20 @@ public static partial class Module
         {
             ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 4))
         });
+        InsertMap(ctx, config);
+    }
+
+    private static void InsertMap(ReducerContext ctx, Config config)
+    {
+        foreach (var room in LevelData.Rooms)
+        {
+            var mapTile = new MapTile
+            {
+                Position = new DbVector2((float)room.x * config.RoomSize, (float)room.y * config.RoomSize),
+                Width = config.RoomSize,
+                Height = config.RoomSize
+            };
+            ctx.Db.MapTile.Insert(mapTile);
+        }
     }
 }

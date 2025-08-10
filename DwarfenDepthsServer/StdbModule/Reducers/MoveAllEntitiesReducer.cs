@@ -25,6 +25,7 @@ public static partial class Module
                 .ToDictionary();
 
             var mapTiles = ctx.Db.MapTile.Iter().ToList();
+            var lines = ctx.Db.Line.Iter().ToArray();
             
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             var entities = ctx.Db.Entity.Iter().ToArray();
@@ -38,7 +39,8 @@ public static partial class Module
                     playerInputs,
                     entityUpdate.SequenceId,
                     config,
-                    mapTiles
+                    mapTiles,
+                    lines
                 );
                 ctx.Db.Entity.EntityId.Update(updateEntity);
             }
@@ -56,17 +58,36 @@ public static partial class Module
         Dictionary<uint, PlayerInput> playerInputs,
         ulong sequenceId,
         Config config,
-        List<MapTile> mapTiles)
+        List<MapTile> mapTiles,
+        Line[] lines)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
         var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
         var direction = hasInput ? playerInput.Direction : entity.Direction;
+        var targetMovement = direction * movementPerInterval;
         var targetPosition = entity.Position + direction * movementPerInterval;
         
         var targetIsInsideARoom = mapTiles.Any(mt => mt.PositionIsInside(targetPosition));
         if (targetIsInsideARoom)
         {
             entity.Position = targetPosition;
+        }
+        else
+        {
+            var movement = new Line(entity.Position, targetPosition);
+            var nearbyLines = Physics.GetNearbyLines(movement, lines);
+            foreach (var line in nearbyLines)
+            {
+                var intersection = Physics.GetIntersection(movement, line);
+                if (!intersection.HasValue) continue;
+                var safeMovement = (intersection.Value - entity.Position) * 0.99f; // Small buffer
+                var safePosition = entity.Position + safeMovement;
+                var remainingMovement = targetMovement - safeMovement;
+                var glideMovement = Line.GlideAlong(line, remainingMovement);
+                var glideTarget = safePosition + glideMovement;
+                entity.Position = glideTarget;
+                break;
+            }
         }
         
         entity.Direction = direction;

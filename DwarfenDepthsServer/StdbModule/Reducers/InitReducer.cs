@@ -23,6 +23,8 @@ public static partial class Module
 
     private static void InsertMap(ReducerContext ctx, Config config)
     {
+        var walls = new List<Line>();
+        
         foreach (var room in LevelData.Rooms)
         {
             var mapTile = new MapTile
@@ -32,6 +34,25 @@ public static partial class Module
                 Height = config.RoomSize
             };
             ctx.Db.MapTile.Insert(mapTile);
+            
+            Log.Info($"MapTile inserted with id {mapTile.Id}");
+            
+            if (!LevelData.HasRoomAt(room.x - 1, room.y))
+            {
+                ctx.Db.Line.Insert(MapTile.GetLeftWall(mapTile));
+            }
+            if (!LevelData.HasRoomAt(room.x + 1, room.y))
+            {
+                ctx.Db.Line.Insert(MapTile.GetRightWall(mapTile));
+            }
+            if (!LevelData.HasRoomAt(room.x, room.y + 1))
+            {
+                ctx.Db.Line.Insert(MapTile.GetTopWall(mapTile));
+            }
+            if (!LevelData.HasRoomAt(room.x, room.y - 1))
+            {
+                ctx.Db.Line.Insert(MapTile.GetBottomWall(mapTile));
+            }
         }
     }
 }

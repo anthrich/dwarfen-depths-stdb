@@ -63,6 +63,7 @@
     <Compile Include="Assets\Scripts\PrefabManager.cs" />
     <Compile Include="Assets\server-types\Types\EntityUpdate.g.cs" />
     <Compile Include="Assets\Scripts\InputState.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\BoundingBox.cs" />
     <Compile Include="Assets\server-types\Types\PlayerInput.g.cs" />
     <Compile Include="Assets\Scripts\EntityController.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Assets\Scripts\NetworkTime.cs" />
     <Compile Include="Assets\Scripts\Vector2Extensions.cs" />
     <Compile Include="Assets\Scripts\EntityAnimator.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Entity.cs" />
     <Compile Include="Assets\server-types\Tables\Entity.g.cs" />
     <Compile Include="Assets\server-types\SpacetimeDBClient.g.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />

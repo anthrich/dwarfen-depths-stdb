@@ -14,7 +14,7 @@
         public static Vector2 GetNormal(Line wall)
         {
             var direction = wall.End - wall.Start;
-            return Vector2.Normalized(new Vector2(-direction.Y, direction.X));
+            return new Vector2(-direction.Y, direction.X).Normalized();
         }
 
         public static Vector2 GlideAlong(Line line, Vector2 direction)

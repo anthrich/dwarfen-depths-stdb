@@ -7,8 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\BoundingBox.cs">
+        <Link>BoundingBox.cs</Link>
+      </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Engine.cs">
         <Link>Engine.cs</Link>
+      </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\Entity.cs">
+        <Link>Entity.cs</Link>
       </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Line.cs">
         <Link>Line.cs</Link>

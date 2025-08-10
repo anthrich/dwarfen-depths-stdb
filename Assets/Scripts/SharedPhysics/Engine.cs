@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace SharedPhysics
 {
-    public class Engine
+    public static class Engine
     {
         public static Vector2? GetIntersection(Line line1, Line line2)
         {
@@ -36,27 +36,46 @@ namespace SharedPhysics
             var movementBounds = BoundingBox.FromLine(line1);
             return allLines.Where(line => BoundingBox.FromLine(line).Overlaps(movementBounds)).ToArray();
         }
-    
-        public struct BoundingBox
+
+        public static Entity[] Simulate(
+            float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines)
         {
-            public float MinX, MinY, MaxX, MaxY;
-    
-            public static BoundingBox FromLine(Line line)
+            var processed = new Entity[entities.Length];
+            var i = 0;
+            
+            foreach (var entity in entities)
             {
-                return new BoundingBox
+                var movementPerInterval = entity.Speed * deltaTime;
+                var targetMovement = entity.Direction.Normalized() * movementPerInterval;
+                var targetPosition = entity.Position + targetMovement;
+                var movementLine = new Line(entity.Position, targetPosition);
+                var nearbyLines = GetNearbyLines(movementLine, lines);
+        
+                foreach (var line in nearbyLines)
                 {
-                    MinX = Math.Min(line.Start.X, line.End.X),
-                    MinY = Math.Min(line.Start.Y, line.End.Y),
-                    MaxX = Math.Max(line.Start.X, line.End.X),
-                    MaxY = Math.Max(line.Start.Y, line.End.Y)
+                    var intersection = GetIntersection(movementLine, line);
+                    if (!intersection.HasValue) continue;
+                    var safeDistance = (intersection.Value - entity.Position).Normalized() * 0.05f;
+                    var safeMovement = intersection.Value - safeDistance - entity.Position;
+                    var safePosition = entity.Position + safeMovement;
+                    var remainingMovement = targetMovement - safeMovement;
+                    var glideMovement = Line.GlideAlong(line, remainingMovement);
+                    targetPosition = safePosition + glideMovement;
+                    break;
+                }
+                
+                processed[i] = new Entity
+                {
+                    Id = entity.Id,
+                    Position = targetPosition,
+                    Direction = entity.Direction,
+                    Speed = entity.Speed,
+                    SequenceId = sequenceId
                 };
+                i++;
             }
-    
-            public bool Overlaps(BoundingBox other)
-            {
-                return MinX <= other.MaxX && MaxX >= other.MinX &&
-                       MinY <= other.MaxY && MaxY >= other.MinY;
-            }
+            
+            return processed;
         }
     }
 }

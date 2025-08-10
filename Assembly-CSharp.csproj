@@ -48,6 +48,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\server-types\Reducers\Disconnect.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
     <Compile Include="Assets\server-types\Tables\Config.g.cs" />
     <Compile Include="Assets\server-types\Tables\PlayerInput.g.cs" />
     <Compile Include="Assets\server-types\Reducers\Connect.g.cs" />
@@ -55,6 +57,7 @@
     <Compile Include="Assets\server-types\Types\Entity.g.cs" />
     <Compile Include="Assets\UserInterface\MainMenu.cs" />
     <Compile Include="Assets\server-types\Tables\EntityUpdate.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Line.cs" />
     <Compile Include="Assets\Scripts\LatencyChart.cs" />
     <Compile Include="Assets\Scripts\SimulationState.cs" />
     <Compile Include="Assets\Scripts\PrefabManager.cs" />

@@ -13,4 +13,8 @@
     <PackageReference Include="SpacetimeDB.Runtime" Version="1.2.*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SharedPhysics\SharedPhysics.csproj" />
+  </ItemGroup>
+
 </Project>

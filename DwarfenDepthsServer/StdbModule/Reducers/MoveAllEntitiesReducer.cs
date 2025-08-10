@@ -1,3 +1,4 @@
+using SharedPhysics;
 using SpacetimeDB;
 
 public static partial class Module
@@ -25,7 +26,7 @@ public static partial class Module
                 .ToDictionary();
 
             var mapTiles = ctx.Db.MapTile.Iter().ToList();
-            var lines = ctx.Db.Line.Iter().ToArray();
+            var lines = ctx.Db.Line.Iter().Select(Line.ToPhysics).ToArray();
             
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             var entities = ctx.Db.Entity.Iter().ToArray();
@@ -59,38 +60,38 @@ public static partial class Module
         ulong sequenceId,
         Config config,
         List<MapTile> mapTiles,
-        Line[] lines)
+        SharedPhysics.Line[] lines)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
         var movementPerInterval = entity.Speed * config.UpdateEntityInterval;
-        var direction = hasInput ? playerInput.Direction : entity.Direction;
+        var direction = DbVector2.ToPhysics(hasInput ? playerInput.Direction : entity.Direction);
         var targetMovement = direction * movementPerInterval;
-        var targetPosition = entity.Position + direction * movementPerInterval;
+        var targetPosition = DbVector2.ToPhysics(entity.Position) + direction * movementPerInterval;
         
-        var targetIsInsideARoom = mapTiles.Any(mt => mt.PositionIsInside(targetPosition));
+        var targetIsInsideARoom = mapTiles.Any(mt => mt.PositionIsInside(DbVector2.ToDb(targetPosition)));
         if (targetIsInsideARoom)
         {
-            entity.Position = targetPosition;
+            entity.Position = DbVector2.ToDb(targetPosition);
         }
         else
         {
-            var movement = new Line(entity.Position, targetPosition);
-            var nearbyLines = Physics.GetNearbyLines(movement, lines);
+            var movement = new SharedPhysics.Line(DbVector2.ToPhysics(entity.Position), targetPosition);
+            var nearbyLines = Engine.GetNearbyLines(movement, lines);
             foreach (var line in nearbyLines)
             {
-                var intersection = Physics.GetIntersection(movement, line);
+                var intersection = Engine.GetIntersection(movement, line);
                 if (!intersection.HasValue) continue;
-                var safeMovement = (intersection.Value - entity.Position) * 0.99f; // Small buffer
-                var safePosition = entity.Position + safeMovement;
+                var safeMovement = (intersection.Value - DbVector2.ToPhysics(entity.Position)) * 0.99f; // Small buffer
+                var safePosition = DbVector2.ToPhysics(entity.Position) + safeMovement;
                 var remainingMovement = targetMovement - safeMovement;
-                var glideMovement = Line.GlideAlong(line, remainingMovement);
+                var glideMovement = SharedPhysics.Line.GlideAlong(line, remainingMovement);
                 var glideTarget = safePosition + glideMovement;
-                entity.Position = glideTarget;
+                entity.Position = DbVector2.ToDb(glideTarget);
                 break;
             }
         }
         
-        entity.Direction = direction;
+        entity.Direction = DbVector2.ToDb(direction);
         entity.SequenceId = sequenceId;
         return entity;
     }

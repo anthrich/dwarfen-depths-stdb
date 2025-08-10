@@ -15,18 +15,13 @@ public static partial class Module
             Start = start;
             End = end;
         }
-        
-        public static DbVector2 GetNormal(Line wall)
-        {
-            var direction = wall.End - wall.Start;
-            return DbVector2.Normalized(new DbVector2(-direction.Y, direction.X));
-        }
 
-        public static DbVector2 GlideAlong(Line line, DbVector2 direction)
+        public static SharedPhysics.Line ToPhysics(Line line)
         {
-            var normal = GetNormal(line);
-            var dotProduct = DbVector2.Dot(direction, normal);
-            return direction - normal * dotProduct;
+            return new SharedPhysics.Line(
+                DbVector2.ToPhysics(line.Start),
+                DbVector2.ToPhysics(line.End)
+            );
         }
     }
 }

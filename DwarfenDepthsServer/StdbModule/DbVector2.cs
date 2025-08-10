@@ -1,4 +1,6 @@
-﻿[SpacetimeDB.Type]
+﻿using SharedPhysics;
+
+[SpacetimeDB.Type]
 public partial struct DbVector2
 {
     public float X;
@@ -10,22 +12,13 @@ public partial struct DbVector2
         Y = y;
     }
 
-    public float SqrMagnitude => X * X + Y * Y;
-    public float GetMagnitude() => MathF.Sqrt(SqrMagnitude);
-
-    public static DbVector2 operator +(DbVector2 a, DbVector2 b) => new(a.X + b.X, a.Y + b.Y);
-    public static DbVector2 operator -(DbVector2 a, DbVector2 b) => new(a.X - b.X, a.Y - b.Y);
-    public static DbVector2 operator *(DbVector2 a, float b) => new(a.X * b, a.Y * b);
-    public static DbVector2 operator /(DbVector2 a, float b) => new(a.X / b, a.Y / b);
-    
-    public static DbVector2 Normalized(DbVector2 vector)
+    public static Vector2 ToPhysics(DbVector2 dbVector2)
     {
-        var magnitude = vector.GetMagnitude();
-        return magnitude > 0 ? vector / magnitude : vector;
+        return new Vector2(dbVector2.X, dbVector2.Y);
     }
     
-    public static float Dot(DbVector2 a, DbVector2 b)
+    public static DbVector2 ToDb(Vector2 dbVector2)
     {
-        return a.X * b.X + a.Y * b.Y;
+        return new DbVector2(dbVector2.X, dbVector2.Y);
     }
 }

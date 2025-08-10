@@ -227,8 +227,22 @@ public class PlayerMovement :
                     ++rewindTick;
                     continue;
                 }
-                
-                canonicalPosition = ApplyDirection(rewoundInput.Direction, canonicalPosition);
+                var result = Engine.Simulate(
+                    _serverUpdateInterval,
+                    _currentSequenceId,
+                    new [] {
+                        new SharedPhysics.Entity
+                        {
+                            Id = _serverEntityState.EntityId,
+                            Position = canonicalPosition.ToSharedPhysicsV2(),
+                            Direction = rewoundInput.Direction.ToSharedPhysicsV2(),
+                            SequenceId = rewindTick,
+                            Speed = _serverEntityState.Speed
+                        }
+                    },
+                    Array.Empty<Line>()
+                );
+                canonicalPosition = result[0].Position.ToGamePosition(canonicalPosition.y);
                 _simulationStateCache[rewindCacheIndex] = new SimulationState
                 {
                     Position = canonicalPosition,

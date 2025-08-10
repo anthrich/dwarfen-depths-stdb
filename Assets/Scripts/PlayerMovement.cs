@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using SpacetimeDB.Types;
+using SharedPhysics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Entity = SpacetimeDB.Types.Entity;
 using Input = SpacetimeDB.Types.Input;
+using Vector2 = UnityEngine.Vector2;
 
 [RequireComponent(typeof(EntityInterpolation))]
 [RequireComponent(typeof(EntityAnimator))]
@@ -149,7 +151,22 @@ public class PlayerMovement :
                 Position = new Vector2(canonicalPosition.x, canonicalPosition.z),
                 SequenceId = _currentSequenceId
             };
-            canonicalPosition = ApplyDirection(input.Direction, canonicalPosition);
+            var result = Engine.Simulate(
+                _serverUpdateInterval,
+                _currentSequenceId,
+                new [] {
+                    new SharedPhysics.Entity
+                    {
+                        Id = _serverEntityState.EntityId,
+                        Position = canonicalPosition.ToSharedPhysicsV2(),
+                        Direction = input.Direction.ToSharedPhysicsV2(),
+                        SequenceId = _currentSequenceId,
+                        Speed = _serverEntityState.Speed
+                    }
+                },
+                Array.Empty<Line>()
+            );
+            canonicalPosition = result[0].Position.ToGamePosition(_yPosition);
             SendInput(input);
             _currentSequenceId++;
         }

@@ -7,6 +7,16 @@ public static class Vector2Extensions
     {
         return new Vector2(vec.X, vec.Y);
     }
+
+    public static SharedPhysics.Vector2 ToSharedPhysicsV2(this Vector3 vec)
+    {
+        return new SharedPhysics.Vector2(vec.x, vec.z);
+    }
+    
+    public static SharedPhysics.Vector2 ToSharedPhysicsV2(this Vector2 vec)
+    {
+        return new SharedPhysics.Vector2(vec.x, vec.y);
+    }
     
     public static Vector3 ToGamePosition(this Vector2 vec, float yPos)
     {
@@ -14,6 +24,11 @@ public static class Vector2Extensions
     }
     
     public static Vector3 ToGamePosition(this DbVector2 vec, float yPos)
+    {
+        return new Vector3(vec.X, yPos, vec.Y);
+    }
+    
+    public static Vector3 ToGamePosition(this SharedPhysics.Vector2 vec, float yPos)
     {
         return new Vector3(vec.X, yPos, vec.Y);
     }

@@ -59,5 +59,6 @@ public class CameraMovement : MonoBehaviour
     {
         var inputVector2 = value.Get<Vector2>();
         _orbitalFollow.Radius -= inputVector2.y;
+        _orbitalFollow.Radius = Mathf.Clamp(_orbitalFollow.Radius, 3, 15);
     }
 }

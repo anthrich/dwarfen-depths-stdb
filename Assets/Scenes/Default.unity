@@ -11485,6 +11485,7 @@ MonoBehaviour:
   playerPrefab: {fileID: -2269470864599157433, guid: bb194b56652a1104480a5ae2cb051699, type: 3}
   entityPrefab: {fileID: 210860860154899246, guid: c41a38a8fe4f034429f826b9d51ceb9a, type: 3}
   floorMeshPrefab: {fileID: 6370093706008576378, guid: eb11ca9765d1ddf4fb3ef380be246e5d, type: 3}
+  wallMeshPrefab: {fileID: 1108207780970762663, guid: 02f7c8ea83e4e594daeda72b66676da3, type: 3}
   mapContainer: {fileID: 1305144157}
 --- !u!114 &882780452
 MonoBehaviour:
@@ -21151,7 +21152,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1521034279870936410, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: Radius
-      value: 5
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 2516233996505991149, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: m_Name
@@ -21196,6 +21197,14 @@ PrefabInstance:
     - target: {fileID: 5420181492065798055, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6706123400464100698, guid: 925029b7027c11a49a45821818a81107, type: 3}
+      propertyPath: field of view
+      value: 62.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9008117181631946171, guid: 925029b7027c11a49a45821818a81107, type: 3}
+      propertyPath: Lens.FieldOfView
+      value: 62.2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

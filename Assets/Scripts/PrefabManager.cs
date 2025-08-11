@@ -1,5 +1,6 @@
 using SpacetimeDB.Types;
 using UnityEngine;
+using Line = SharedPhysics.Line;
 using PlayerInput = UnityEngine.InputSystem.PlayerInput;
 
 public class PrefabManager : MonoBehaviour
@@ -9,6 +10,7 @@ public class PrefabManager : MonoBehaviour
     public PlayerController playerPrefab;
     public EntityController entityPrefab;
     public MeshFilter floorMeshPrefab;
+    public MeshFilter wallMeshPrefab;
     public GameObject mapContainer;
 
     private void Awake()
@@ -26,6 +28,22 @@ public class PrefabManager : MonoBehaviour
         Vector3 scale = new Vector3(tile.Width / originalWidth, 1f, tile.Height / originalLength);
         meshFilter.transform.localScale = scale;
         meshFilter.transform.position = tile.Position.ToGamePosition(0);
+    }
+
+    public static void SpawnWall(Line line)
+    {
+        MeshFilter meshFilter = Instantiate(_instance.wallMeshPrefab, _instance.mapContainer.transform);
+        Bounds bounds = meshFilter.mesh.bounds;
+        float originalLength = bounds.size.x;
+        var diff = line.End - line.Start;
+        var length = diff.GetMagnitude();
+        Vector3 scale = new Vector3(length / originalLength, 1f, 1f);
+        meshFilter.transform.localScale = scale;
+        meshFilter.transform.position = (line.Start + diff * 0.5f)
+            .ToGamePosition(meshFilter.transform.position.y);
+        float angleInRadians = Mathf.Atan2(diff.Y, diff.X);
+        float angleInDegrees = angleInRadians * Mathf.Rad2Deg;
+        meshFilter.transform.rotation = Quaternion.Euler(90, angleInDegrees, 0);
     }
 
     public static PlayerController SpawnPlayer(Player player)

@@ -90,9 +90,9 @@ public class GameManager : MonoBehaviour
 
     private void LineOnOnInsert(EventContext context, Line row)
     {
-        Simulation.Instance.Register(
-            new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y))
-        );
+        var line = new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y));
+        Simulation.Instance.Register(line);
+        PrefabManager.SpawnWall(line);
     }
 
     void HandleConnectError(Exception ex)

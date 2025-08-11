@@ -11,6 +11,7 @@ public class PrefabManager : MonoBehaviour
     public EntityController entityPrefab;
     public MeshFilter floorMeshPrefab;
     public MeshFilter wallMeshPrefab;
+    public MeshFilter roofMeshPrefab;
     public GameObject mapContainer;
 
     private void Awake()
@@ -20,14 +21,21 @@ public class PrefabManager : MonoBehaviour
 
     public static void SpawnMapTile(MapTile tile)
     {
-        MeshFilter meshFilter = Instantiate(_instance.floorMeshPrefab, _instance.mapContainer.transform);
-        Bounds bounds = meshFilter.mesh.bounds;
-        float originalWidth = bounds.size.x;
-        float originalLength = bounds.size.z;
+        MeshFilter floorMesh = Instantiate(_instance.floorMeshPrefab, _instance.mapContainer.transform);
+        MeshFilter roofMesh = Instantiate(_instance.roofMeshPrefab, _instance.mapContainer.transform);
+        ScaleMeshToMapTile(tile, floorMesh);
+        ScaleMeshToMapTile(tile, roofMesh);
+        floorMesh.transform.position = tile.Position.ToGamePosition(floorMesh.transform.position.y);
+        roofMesh.transform.position = tile.Position.ToGamePosition(roofMesh.transform.position.y);
+    }
 
-        Vector3 scale = new Vector3(tile.Width / originalWidth, 1f, tile.Height / originalLength);
-        meshFilter.transform.localScale = scale;
-        meshFilter.transform.position = tile.Position.ToGamePosition(0);
+    private static void ScaleMeshToMapTile(MapTile tile, MeshFilter mesh)
+    {
+        var bounds = mesh.mesh.bounds;
+        var originalWidth = bounds.size.x;
+        var originalLength = bounds.size.z;
+        var scale = new Vector3(tile.Width / originalWidth, 1f, tile.Height / originalLength);
+        mesh.transform.localScale = scale;
     }
 
     public static void SpawnWall(Line line)

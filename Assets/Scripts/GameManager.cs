@@ -76,6 +76,7 @@ public class GameManager : MonoBehaviour
         conn.Db.Player.OnUpdate += OnPlayerUpdated;
         conn.Db.Player.OnDelete += OnPlayerDeleted;
         conn.Db.MapTile.OnInsert += OnMapTileInserted;
+        conn.Db.Line.OnInsert += LineOnOnInsert;
 
         // Request all tables
         Conn.SubscriptionBuilder()
@@ -85,6 +86,13 @@ public class GameManager : MonoBehaviour
         OnConnected?.Invoke();
         
         Conn.Reducers.EnterGame("Player " + (Players.Count + 1));
+    }
+
+    private void LineOnOnInsert(EventContext context, Line row)
+    {
+        Simulation.Instance.Register(
+            new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y))
+        );
     }
 
     void HandleConnectError(Exception ex)
@@ -172,7 +180,7 @@ public class GameManager : MonoBehaviour
             Speed = newEntity.Speed
         });
         
-        entityController.SendMessage("OnEntityUpdated", newEntity);
+        entityController?.SendMessage("OnEntityUpdated", newEntity);
     }
 
     private static void OnEntityDeleted(EventContext context, Entity oldEntity)

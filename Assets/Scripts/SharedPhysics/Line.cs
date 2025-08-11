@@ -1,5 +1,8 @@
-﻿namespace SharedPhysics
+﻿using System;
+
+namespace SharedPhysics
 {
+    [Serializable]
     public struct Line
     {
         public Vector2 Start;

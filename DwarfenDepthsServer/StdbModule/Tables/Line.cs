@@ -3,7 +3,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    [Table(Name = "Line")]
+    [Table(Name = "Line", Public = true)]
     public partial struct Line
     {
         [Unique, AutoInc] public uint Id;

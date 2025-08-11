@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
     <Compile Include="Assets\server-types\Tables\Config.g.cs" />
     <Compile Include="Assets\server-types\Tables\PlayerInput.g.cs" />
+    <Compile Include="Assets\server-types\Tables\Line.g.cs" />
     <Compile Include="Assets\server-types\Reducers\Connect.g.cs" />
     <Compile Include="Assets\server-types\Types\MapTile.g.cs" />
     <Compile Include="Assets\server-types\Types\Entity.g.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Assets\server-types\Tables\Entity.g.cs" />
     <Compile Include="Assets\server-types\SpacetimeDBClient.g.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
+    <Compile Include="Assets\server-types\Types\Line.g.cs" />
     <Compile Include="Assets\server-types\Reducers\UpdatePlayerInput.g.cs" />
     <Compile Include="Assets\Scripts\EntityInterpolation.cs" />
     <Compile Include="Assets\Scripts\UpdateRateCache.cs" />

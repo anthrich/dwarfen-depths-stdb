@@ -24,6 +24,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     
     private Entity _serverEntityState;
     private readonly List<Entity> _entities = new();
+    private List<Line> _lines = new();
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private ulong _lastCorrectedSequenceId;
     private List<ISubscriber<Entity>> _subscribers = new();
@@ -39,6 +40,11 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     public void Init()
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
+    }
+
+    public void Register(Line line)
+    {
+        _lines.Add(line);
     }
 
     public void SetLocalPlayerEntity(Entity localPlayerEntity)
@@ -98,7 +104,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 _serverUpdateInterval,
                 _currentSequenceId,
                 new[] { _localPlayerEntity },
-                Array.Empty<Line>()
+                _lines.ToArray()
             );
             
             _localPlayerEntity = result[0];
@@ -149,7 +155,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                     new [] {
                         localPlayerEntity
                     },
-                    Array.Empty<Line>()
+                    _lines.ToArray()
                 );
                 localPlayerEntity = result[0];
                 _simulationStateCache[rewindCacheIndex] = localPlayerEntity;

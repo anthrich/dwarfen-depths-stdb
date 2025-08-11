@@ -50,7 +50,7 @@ public class CameraMovement : MonoBehaviour
         var inputVector2 = value.Get<Vector2>();
         _orbitalFollow.HorizontalAxis.Value += inputVector2.x * lookSensitivity;
         _orbitalFollow.VerticalAxis.Value -= inputVector2.y * lookSensitivity;
-        _orbitalFollow.VerticalAxis.Value = Mathf.Clamp(_orbitalFollow.VerticalAxis.Value, 20, 80);
+        _orbitalFollow.VerticalAxis.Value = Mathf.Clamp(_orbitalFollow.VerticalAxis.Value, -10, 80);
         SendMessage("OnLookApplied", SendMessageOptions.DontRequireReceiver);
     }
     

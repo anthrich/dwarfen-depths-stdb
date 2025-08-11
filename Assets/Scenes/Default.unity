@@ -21054,6 +21054,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1469780205561416039, guid: 925029b7027c11a49a45821818a81107, type: 3}
+      propertyPath: AvoidObstacles.Damping
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1469780205561416039, guid: 925029b7027c11a49a45821818a81107, type: 3}
+      propertyPath: AvoidObstacles.SmoothingTime
+      value: 0.04
+      objectReference: {fileID: 0}
     - target: {fileID: 1521034279870936410, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: Radius
       value: 8

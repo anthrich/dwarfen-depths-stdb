@@ -49,8 +49,9 @@ public class PrefabManager : MonoBehaviour
             var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
             var cameraMovement = entityController.gameObject.AddComponent<CameraMovement>();
             cameraMovement.Init(GameManager.Instance.cinemachineCamera, playerInput);
+            Simulation.Instance.Subscribe(playerMovement);
+            Simulation.Instance.Subscribe(_instance.latencyChart);
             playerMovement.OnEntitySpawned(entity);
-            playerMovement.Subscribe(_instance.latencyChart);
             entityController.GetComponent<PlayerInput>().enabled = true;
         }
         else

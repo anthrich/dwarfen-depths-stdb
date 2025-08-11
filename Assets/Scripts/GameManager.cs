@@ -4,6 +4,8 @@ using SpacetimeDB;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
 using UnityEngine;
+using Input = SpacetimeDB.Types.Input;
+using Vector2 = SharedPhysics.Vector2;
 
 [RequireComponent(typeof(NetworkTime))]
 public class GameManager : MonoBehaviour
@@ -116,6 +118,11 @@ public class GameManager : MonoBehaviour
         Conn = null;
     }
 
+    public static void SendInput(List<Input> inputs)
+    {
+        if(IsConnected() && LocalPlayer) Conn.Reducers.UpdatePlayerInput(inputs);
+    }
+
     private static void OnMapTileInserted(EventContext context, MapTile tile)
     {
         PrefabManager.SpawnMapTile(tile);
@@ -125,6 +132,7 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Got config: {insertedValue}");
         Config = insertedValue;
+        Simulation.Instance.Init();
     }
     
     private static void OnEntityInserted(EventContext context, Entity insertedValue)
@@ -135,8 +143,16 @@ public class GameManager : MonoBehaviour
         if (player.isLocalPlayer)
         {
             Instance.cinemachineCamera.Target.TrackingTarget = entityController.transform;
+            Simulation.Instance.SetLocalPlayerEntity(new SharedPhysics.Entity()
+            {
+                Position = new Vector2(insertedValue.Position.X, insertedValue.Position.Y),
+                Direction = new Vector2(insertedValue.Direction.X, insertedValue.Direction.Y),
+                SequenceId = insertedValue.SequenceId,
+                Id = insertedValue.EntityId,
+                Speed = insertedValue.Speed
+            });
         }
-
+        
         Entities.Add(insertedValue.EntityId, entityController);
     }
     
@@ -146,6 +162,15 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
+        
+        Simulation.Instance.OnEntityUpdated(new SharedPhysics.Entity()
+        {
+            Position = new Vector2(newEntity.Position.X, newEntity.Position.Y),
+            Direction = new Vector2(newEntity.Direction.X, newEntity.Direction.Y),
+            SequenceId = newEntity.SequenceId,
+            Id = newEntity.EntityId,
+            Speed = newEntity.Speed
+        });
         
         entityController.SendMessage("OnEntityUpdated", newEntity);
     }

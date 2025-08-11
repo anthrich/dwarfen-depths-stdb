@@ -61,7 +61,7 @@ namespace SharedPhysics
                     var remainingMovement = targetMovement - safeMovement;
                     var glideMovement = Line.GlideAlong(line, remainingMovement);
                     targetPosition = safePosition + glideMovement;
-                    break;
+                    movementLine = new Line(entity.Position, targetPosition);
                 }
                 
                 processed[i] = new Entity

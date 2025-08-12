@@ -12,7 +12,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{2a237f97-4e11-75d6-548d-69dccf142728}</ProjectGuid>
+    <ProjectGuid>{ef6803e6-84f2-36aa-ad13-78ebff1dd721}</ProjectGuid>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -41,7 +41,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Repos\SpaceTimer\Library\PackageCache\com.clockworklabs.spacetimedbsdk@aecb141a21b4\packages\spacetimedb.bsatn.runtime\1.2.1\analyzers\dotnet\cs\SpacetimeDB.BSATN.Codegen.dll" />
+    <Analyzer Include="C:\Repos\DwarfenDepths\Library\PackageCache\com.clockworklabs.spacetimedbsdk@aecb141a21b4\packages\spacetimedb.bsatn.runtime\1.2.1\analyzers\dotnet\cs\SpacetimeDB.BSATN.Codegen.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -409,40 +409,40 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.ext.nunit@031a54704bff\net40\unity-custom\nunit.framework.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.ext.nunit@031a54704bff\net40\unity-custom\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="ReportGeneratorMerged">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.testtools.codecoverage@205a02cbcb39\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.testtools.codecoverage@205a02cbcb39\lib\ReportGenerator\ReportGeneratorMerged.dll</HintPath>
     </Reference>
     <Reference Include="unityplastic">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\unityplastic.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\unityplastic.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Antlr3.Runtime">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="log4netPlastic">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\log4netPlastic.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collab-proxy@c854d1f7d97f\Lib\Editor\log4netPlastic.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.IonicZip">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="SpacetimeDB.BSATN.Runtime">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.clockworklabs.spacetimedbsdk@aecb141a21b4\packages\spacetimedb.bsatn.runtime\1.2.1\lib\netstandard2.1\SpacetimeDB.BSATN.Runtime.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.clockworklabs.spacetimedbsdk@aecb141a21b4\packages\spacetimedb.bsatn.runtime\1.2.1\lib\netstandard2.1\SpacetimeDB.BSATN.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.nuget.newtonsoft-json@74deb55db2a0\Runtime\Newtonsoft.Json.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.nuget.newtonsoft-json@74deb55db2a0\Runtime\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
-      <HintPath>C:\Repos\SpaceTimer\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>
@@ -820,153 +820,153 @@
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Xml.XPath.XDocument.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TestRunner">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.TestRunner">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\UnityEditor.TestRunner.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEditor.TestRunner.dll</HintPath>
     </Reference>
     <Reference Include="com.clockworklabs.spacetimedbsdk">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\com.clockworklabs.spacetimedbsdk.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\com.clockworklabs.spacetimedbsdk.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Splines.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Splines.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.Editor.dll</HintPath>
     </Reference>
     <Reference Include="XCharts.Runtime">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\XCharts.Runtime.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem.ForUI">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Configurations.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Configurations.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Configurations.Editor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.UI">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Rider.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Shared.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Core.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.Center.Common">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.Center.Common.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Center.Common.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Updater">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.AI.Navigation.Updater.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.Updater.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Editor.Bridge">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Editor.Bridge.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Editor.Bridge.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Cinemachine.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Scenarios.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.EditorCoroutines.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.EditorCoroutines.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.EditorCoroutines.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Timeline.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Timeline">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TestTools.CodeCoverage.Editor.OpenCover.Model">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TestTools.CodeCoverage.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Settings.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PlasticSCM.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Splines">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Splines.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.Center.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Performance.Profile-Analyzer.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Performance.Profile-Analyzer.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Performance.Profile-Analyzer.Editor.dll</HintPath>
     </Reference>
     <Reference Include="XCharts.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\XCharts.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Cinemachine">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Analytics.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Analytics.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Analytics.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
     <Reference Include="XCharts.Examples">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.Playmode">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.Multiplayer.Playmode.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Playmode.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Core">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem">
-      <HintPath>C:\Repos\SpaceTimer\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Assembly-CSharp.csproj">
-      <Project>{5a971305-3b13-08bd-a1b6-64a888bed991}</Project>
+      <Project>{5ccbd318-630d-371b-1ee4-7d7301579fdf}</Project>
       <Name>Assembly-CSharp</Name>
     </ProjectReference>
   </ItemGroup>

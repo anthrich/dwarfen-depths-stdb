@@ -15,7 +15,9 @@ public class NetworkTime : MonoBehaviour
         if (newPlayer.PlayerId != GameManager.LocalPlayer.playerId) return;
         timeScale = newPlayer.SimulationOffset switch
         {
-            < 2 => 1.2f,
+            < -10 => 10f,
+            < 1 => 1.2f,
+            < 2 => 1.1f,
             > 3 => 0.8f,
             _ => targetTimeScale,
         };

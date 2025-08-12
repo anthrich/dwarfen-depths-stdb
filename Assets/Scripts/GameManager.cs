@@ -15,11 +15,12 @@ public class GameManager : MonoBehaviour
     
     public static readonly Dictionary<string, string> ServerChoices = new()
     {
-        {"Local", "http://127.0.0.1:3000"}
+        {"Local", "http://127.0.0.1:3000"},
+        {"Maincloud", "https://maincloud.spacetimedb.com"}
     };
     
     const string ServerURL = "http://127.0.0.1:3000";
-    const string ModuleName = "spacetimer";
+    const string ModuleName = "dwarfen-depths";
 
     public static event Action OnConnected;
     public static event Action OnSubscriptionApplied;

@@ -19,6 +19,24 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "PlayerInput";
 
+            public sealed class EntityIdSequenceIdIndex : BTreeIndexBase<(uint EntityId, ulong SequenceId)>
+            {
+                protected override (uint EntityId, ulong SequenceId) GetKey(PlayerInput row) => (row.EntityId, row.SequenceId);
+
+                public EntityIdSequenceIdIndex(PlayerInputHandle table) : base(table) { }
+            }
+
+            public readonly EntityIdSequenceIdIndex EntityIdSequenceId;
+
+            public sealed class EntityIdIndex : BTreeIndexBase<uint>
+            {
+                protected override uint GetKey(PlayerInput row) => row.EntityId;
+
+                public EntityIdIndex(PlayerInputHandle table) : base(table) { }
+            }
+
+            public readonly EntityIdIndex EntityId;
+
             public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
             {
                 protected override ulong GetKey(PlayerInput row) => row.Id;
@@ -27,24 +45,6 @@ namespace SpacetimeDB.Types
             }
 
             public readonly IdUniqueIndex Id;
-
-            public sealed class PlayerIdSequenceIdIndex : BTreeIndexBase<(uint PlayerId, ulong SequenceId)>
-            {
-                protected override (uint PlayerId, ulong SequenceId) GetKey(PlayerInput row) => (row.PlayerId, row.SequenceId);
-
-                public PlayerIdSequenceIdIndex(PlayerInputHandle table) : base(table) { }
-            }
-
-            public readonly PlayerIdSequenceIdIndex PlayerIdSequenceId;
-
-            public sealed class PlayerIdIndex : BTreeIndexBase<uint>
-            {
-                protected override uint GetKey(PlayerInput row) => row.PlayerId;
-
-                public PlayerIdIndex(PlayerInputHandle table) : base(table) { }
-            }
-
-            public readonly PlayerIdIndex PlayerId;
 
             public sealed class SequenceIdIndex : BTreeIndexBase<ulong>
             {
@@ -57,9 +57,9 @@ namespace SpacetimeDB.Types
 
             internal PlayerInputHandle(DbConnection conn) : base(conn)
             {
+                EntityIdSequenceId = new(this);
+                EntityId = new(this);
                 Id = new(this);
-                PlayerIdSequenceId = new(this);
-                PlayerId = new(this);
                 SequenceId = new(this);
             }
 

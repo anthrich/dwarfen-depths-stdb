@@ -18,12 +18,28 @@ public static partial class Module
         {
             ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 4))
         });
-        InsertMap(ctx, config);
+        var mapTiles = InsertMap(ctx, config);
+        InsertRatmen(ctx, mapTiles, entityUpdate);
     }
 
-    private static void InsertMap(ReducerContext ctx, Config config)
+    private static void InsertRatmen(ReducerContext ctx, List<MapTile> mapTiles, EntityUpdate entityUpdate)
     {
-        var walls = new List<Line>();
+        foreach (var mapTile in mapTiles.Skip(3).Take(2))
+        {
+            ctx.Db.Entity.Insert(new Entity()
+            {
+                Position = mapTile.Position,
+                Direction = new DbVector2(0, 0),
+                SequenceId = entityUpdate.SequenceId,
+                Speed = 10f,
+                Allegiance = Faction.Ratmen
+            });
+        }
+    }
+
+    private static List<MapTile> InsertMap(ReducerContext ctx, Config config)
+    {
+        var mapTiles = new List<MapTile>();
         
         foreach (var room in LevelData.Rooms)
         {
@@ -34,6 +50,7 @@ public static partial class Module
                 Height = config.RoomSize
             };
             ctx.Db.MapTile.Insert(mapTile);
+            mapTiles.Add(mapTile);
             
             Log.Info($"MapTile inserted with id {mapTile.Id}");
             
@@ -54,5 +71,7 @@ public static partial class Module
                 ctx.Db.Line.Insert(MapTile.GetBottomWall(mapTile));
             }
         }
+        
+        return mapTiles;
     }
 }

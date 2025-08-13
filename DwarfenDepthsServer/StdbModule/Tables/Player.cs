@@ -10,7 +10,7 @@ public static partial class Module
         [Unique, AutoInc]
         public uint PlayerId;
         public string Name;
-        public DbVector2 Position;
+        public uint EntityId;
         public sbyte SimulationOffset;
     }
 }

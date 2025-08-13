@@ -82,6 +82,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     
     private void Update()
     {
+        if(_currentSequenceId == 0) return;
         _accumulatedDeltaTime += Time.deltaTime;
         
         while (_accumulatedDeltaTime >= _serverUpdateInterval)

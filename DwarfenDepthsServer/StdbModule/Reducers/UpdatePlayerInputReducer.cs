@@ -8,11 +8,11 @@ public static partial class Module
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         foreach (var input in inputs)
         {
-            ctx.Db.PlayerInput.PlayerId_SequenceId.Delete((player.PlayerId, input.SequenceId));
+            ctx.Db.PlayerInput.EntityId_SequenceId.Delete((player.EntityId, input.SequenceId));
             ctx.Db.PlayerInput.Insert(
                 new PlayerInput
                 {
-                    PlayerId = player.PlayerId,
+                    EntityId = player.EntityId,
                     Direction = input.Direction,
                     SequenceId = input.SequenceId,
                 }

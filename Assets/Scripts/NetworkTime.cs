@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Annotations;
 using SpacetimeDB.Types;
 using UnityEngine;
@@ -12,10 +11,10 @@ public class NetworkTime : MonoBehaviour
     [UsedImplicitly]
     public void OnPlayerUpdated(Player newPlayer)
     {
-        if (newPlayer.PlayerId != GameManager.LocalPlayer.playerId) return;
+        if (newPlayer.PlayerId != GameManager.LocalPlayer.EntityId) return;
         timeScale = newPlayer.SimulationOffset switch
         {
-            < -10 => 10f,
+            < -10 => 3f,
             < 1 => 1.2f,
             < 2 => 1.1f,
             > 3 => 0.8f,

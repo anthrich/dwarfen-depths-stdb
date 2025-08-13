@@ -38,6 +38,7 @@ public class PlayerMovement :
     [UsedImplicitly]
     public void OnEntityUpdated(Entity newServerEntityState)
     {
+        if(!serverStateObject) return;
         serverStateObject.transform.position = newServerEntityState.Position.ToGamePosition(_yPosition);
     }
 

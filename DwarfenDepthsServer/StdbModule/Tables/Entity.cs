@@ -5,12 +5,13 @@ public static partial class Module
     [Table(Name = "Entity", Public = true)]
     public partial struct Entity
     {
-        [PrimaryKey] 
+        [PrimaryKey, AutoInc]
         public uint EntityId;
         public float Speed;
         public DbVector2 Position;
         public DbVector2 Direction;
         public ulong SequenceId;
+        public Faction Allegiance;
 
         public static SharedPhysics.Entity ToPhysics(Entity entity)
         {

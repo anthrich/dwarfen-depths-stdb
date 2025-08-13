@@ -11404,7 +11404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeScale: 1
-  adjustmentRate: 0.001
+  adjustmentRate: 0.002
   targetTimeScale: 1
 --- !u!114 &882780453
 MonoBehaviour:
@@ -21064,7 +21064,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1521034279870936410, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: Radius
-      value: 8
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2516233996505991149, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: m_Name

@@ -9,20 +9,21 @@ public static partial class Module
         var player = ctx.Db.Player.Identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         player.Name = name;
         ctx.Db.Player.Identity.Update(player);
-        SpawnPlayer(ctx, player.PlayerId);
+        SpawnPlayerEntity(ctx, player);
     }
     
-    private static void SpawnPlayer(ReducerContext ctx, uint playerId)
+    private static void SpawnPlayerEntity(ReducerContext ctx, Player player)
     {
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
         var mapTile = ctx.Db.MapTile.Iter().First();
-        ctx.Db.Entity.Insert(new Entity
+        var playerEntity = ctx.Db.Entity.Insert(new Entity
         {
-            EntityId = playerId,
             Position = mapTile.Position,
             Direction = new DbVector2(0,0),
             SequenceId = entityUpdate.SequenceId,
             Speed = 10f
         });
+        player.EntityId = playerEntity.EntityId;
+        ctx.Db.Player.Identity.Update(player);
     }
 }

@@ -19,7 +19,6 @@ public class GameManager : MonoBehaviour
         {"Maincloud", "https://maincloud.spacetimedb.com"}
     };
     
-    const string ServerURL = "http://127.0.0.1:3000";
     const string ModuleName = "dwarfen-depths";
 
     public static event Action OnConnected;
@@ -32,7 +31,6 @@ public class GameManager : MonoBehaviour
     public static DbConnection Conn { get; private set; }
 
     private static readonly Dictionary<uint, EntityController> Entities = new();
-    private static readonly Dictionary<uint, PlayerController> Players = new();
 
     private void Start()
     {
@@ -58,11 +56,6 @@ public class GameManager : MonoBehaviour
         Conn = builder.Build();
     }
 
-    public void JoinGame()
-    {
-        Conn.Reducers.EnterGame("Player " + (Players.Count + 1));
-    }
-
     // Called when we connect to SpacetimeDB and receive our client identity
     void HandleConnect(DbConnection conn, Identity identity, string token)
     {
@@ -73,20 +66,24 @@ public class GameManager : MonoBehaviour
         conn.Db.Entity.OnInsert += OnEntityInserted;
         conn.Db.Entity.OnUpdate += OnEntityUpdated;
         conn.Db.Entity.OnDelete += OnEntityDeleted;
-        conn.Db.Player.OnInsert += OnPlayerInserted;
-        conn.Db.Player.OnUpdate += OnPlayerUpdated;
-        conn.Db.Player.OnDelete += OnPlayerDeleted;
+        conn.Db.Player.OnInsert += OnDbPlayerInserted;
+        conn.Db.Player.OnUpdate += OnDbPlayerUpdated;
         conn.Db.MapTile.OnInsert += OnMapTileInserted;
         conn.Db.Line.OnInsert += LineOnOnInsert;
 
-        // Request all tables
+        
         Conn.SubscriptionBuilder()
-            .OnApplied(HandleSubscriptionApplied)
-            .SubscribeToAllTables();
+            .Subscribe(new []
+                {
+                    "SELECT * FROM Player",
+                    "SELECT * FROM Config",
+                    "SELECT * FROM Entity",
+                    "SELECT * FROM MapTile",
+                    "SELECT * FROM Line",
+                }
+            );
         
         OnConnected?.Invoke();
-        
-        Conn.Reducers.EnterGame("Player " + (Players.Count + 1));
     }
 
     private void LineOnOnInsert(EventContext context, Line row)
@@ -146,22 +143,7 @@ public class GameManager : MonoBehaviour
     
     private static void OnEntityInserted(EventContext context, Entity insertedValue)
     {
-        var player = GetOrCreatePlayer(insertedValue.EntityId);
-        var entityController = PrefabManager.SpawnEntity(insertedValue, player);
-        
-        if (player.isLocalPlayer)
-        {
-            Instance.cinemachineCamera.Target.TrackingTarget = entityController.transform;
-            Simulation.Instance.SetLocalPlayerEntity(new SharedPhysics.Entity()
-            {
-                Position = new Vector2(insertedValue.Position.X, insertedValue.Position.Y),
-                Direction = new Vector2(insertedValue.Direction.X, insertedValue.Direction.Y),
-                SequenceId = insertedValue.SequenceId,
-                Id = insertedValue.EntityId,
-                Speed = insertedValue.Speed
-            });
-        }
-        
+        var entityController = PrefabManager.SpawnEntity(insertedValue);
         Entities.Add(insertedValue.EntityId, entityController);
     }
     
@@ -192,34 +174,42 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    private static void OnPlayerInserted(EventContext context, Player insertedPlayer)
+    private void OnDbPlayerInserted(EventContext context, Player insertedPlayer)
     {
-        GetOrCreatePlayer(insertedPlayer.PlayerId);
+        if (insertedPlayer?.Identity != LocalIdentity) return;
+        LocalPlayer = PrefabManager.SpawnPlayer(insertedPlayer);
+        Conn.Reducers.OnEnterGame += OnGameEntered;
+        Conn.Reducers.EnterGame("Player");
     }
 
-    private static void OnPlayerDeleted(EventContext context, Player deletedvalue)
+    private void OnGameEntered(ReducerEventContext context, string playerName)
     {
-        if (Players.Remove(deletedvalue.PlayerId, out var playerController))
+        var player = Conn.Db.Player.Identity.Find(LocalIdentity);
+        if(player == default) return;
+        LocalPlayer.EntityId = player.EntityId;
+        if (Entities.Remove(LocalPlayer.EntityId, out var existingController))
         {
-            Destroy(playerController.gameObject);
+            Destroy(existingController.gameObject);
         }
-    }
-
-    private static void OnPlayerUpdated(EventContext context, Player oldPlayer, Player newPlayer)
-    {
-        Instance.SendMessage("OnPlayerUpdated", newPlayer);
-    }
-    
-    private static PlayerController GetOrCreatePlayer(uint playerId)
-    {
-        if (Players.TryGetValue(playerId, out var playerController))
-            return playerController;
         
-        var player = Conn.Db.Player.PlayerId.Find(playerId);
-        playerController = PrefabManager.SpawnPlayer(player);
-        if (player?.Identity == LocalIdentity) LocalPlayer = playerController;
-        Players.Add(playerId, playerController);
+        var dbEntity = Conn.Db.Entity.EntityId.Find(LocalPlayer.EntityId);
+        var entityController = PrefabManager.SpawnPlayerEntity(dbEntity);
+        Instance.cinemachineCamera.Target.TrackingTarget = entityController.transform;
+        Simulation.Instance.SetLocalPlayerEntity(new SharedPhysics.Entity()
+        {
+            Position = new Vector2(dbEntity.Position.X, dbEntity.Position.Y),
+            Direction = new Vector2(dbEntity.Direction.X, dbEntity.Direction.Y),
+            SequenceId = dbEntity.SequenceId,
+            Id = dbEntity.EntityId,
+            Speed = dbEntity.Speed
+        });
+        Entities.Add(LocalPlayer.EntityId, entityController);
+    }
 
-        return playerController;
+    private void OnDbPlayerUpdated(EventContext context, Player oldPlayer, Player newPlayer)
+    {
+        if (newPlayer?.Identity != LocalIdentity) return;
+        LocalPlayer.EntityId = newPlayer.EntityId;
+        SendMessage("OnPlayerUpdated", newPlayer);
     }
 }

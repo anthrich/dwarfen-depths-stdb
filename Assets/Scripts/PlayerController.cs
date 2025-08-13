@@ -1,18 +1,17 @@
 ﻿using SpacetimeDB.Types;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerController : MonoBehaviour
 {
-	public uint playerId;
-    private float _lastMovementSendTimestamp;
-    private Vector2? _lockInputPosition;
+	[FormerlySerializedAs("playerId")] public uint EntityId;
 	public string username = "Unknown";
 	public bool isLocalPlayer;
 
 	public void Initialize(Player player)
 	{
 		username = player.Name;
-        playerId = player.PlayerId;
+        EntityId = player.EntityId;
         if (player.Identity == GameManager.LocalIdentity)
         {
 	        isLocalPlayer = true;

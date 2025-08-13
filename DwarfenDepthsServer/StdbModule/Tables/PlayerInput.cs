@@ -4,14 +4,14 @@ using Index = SpacetimeDB.Index;
 public static partial class Module
 {
     [Table(Name = "PlayerInput", Public = false)]
-    [Index.BTree(Name = "PlayerId_SequenceId", Columns = [nameof(PlayerId), nameof(SequenceId)])]
+    [Index.BTree(Name = "EntityId_SequenceId", Columns = [nameof(EntityId), nameof(SequenceId)])]
     public partial struct PlayerInput
     {
         [PrimaryKey, AutoInc]
         public ulong Id;
         
         [Index.BTree]
-        public uint PlayerId;
+        public uint EntityId;
         
         [Index.BTree]
         public ulong SequenceId;

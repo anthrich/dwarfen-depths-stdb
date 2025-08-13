@@ -78,6 +78,7 @@
     <Compile Include="Assets\server-types\Types\Config.g.cs" />
     <Compile Include="Assets\server-types\Types\DbVector2.g.cs" />
     <Compile Include="Assets\server-types\Reducers\MoveAllEntities.g.cs" />
+    <Compile Include="Assets\server-types\Types\Faction.g.cs" />
     <Compile Include="Assets\server-types\Tables\MoveAllEntitiesTimer.g.cs" />
     <Compile Include="Assets\Scripts\NetworkTime.cs" />
     <Compile Include="Assets\Scripts\Vector2Extensions.cs" />

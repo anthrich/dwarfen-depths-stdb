@@ -62,30 +62,30 @@ public class PrefabManager : MonoBehaviour
         return playerController;
     }
     
-    public static EntityController SpawnEntity(Entity entity, PlayerController owner)
+    public static EntityController SpawnPlayerEntity(Entity entity)
     {
         var entityController = Instantiate(_instance.entityPrefab);
         entityController.name = $"Entity:{entity.EntityId}";
         entityController.Spawn(entity.EntityId);
-        
-        if (owner.isLocalPlayer)
-        {
-            var playerInput = entityController.GetComponent<PlayerInput>();
-            playerInput.enabled = true;
-            var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
-            var cameraMovement = entityController.gameObject.AddComponent<CameraMovement>();
-            cameraMovement.Init(GameManager.Instance.cinemachineCamera, playerInput);
-            Simulation.Instance.Subscribe(playerMovement);
-            Simulation.Instance.Subscribe(_instance.latencyChart);
-            playerMovement.OnEntitySpawned(entity);
-            entityController.GetComponent<PlayerInput>().enabled = true;
-        }
-        else
-        {
-            var serverEntityMovement = entityController.gameObject.AddComponent<ServerEntityMovement>();
-            serverEntityMovement.Init(entity);
-        }
+        var playerInput = entityController.GetComponent<PlayerInput>();
+        playerInput.enabled = true;
+        var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
+        var cameraMovement = entityController.gameObject.AddComponent<CameraMovement>();
+        cameraMovement.Init(GameManager.Instance.cinemachineCamera, playerInput);
+        Simulation.Instance.Subscribe(playerMovement);
+        Simulation.Instance.Subscribe(_instance.latencyChart);
+        playerMovement.OnEntitySpawned(entity);
+        entityController.GetComponent<PlayerInput>().enabled = true;
+        return entityController;
+    }
 
+    public static EntityController SpawnEntity(Entity entity)
+    {
+        var entityController = Instantiate(_instance.entityPrefab);
+        entityController.name = $"Entity:{entity.EntityId}";
+        entityController.Spawn(entity.EntityId);
+        var serverEntityMovement = entityController.gameObject.AddComponent<ServerEntityMovement>();
+        serverEntityMovement.Init(entity);
         return entityController;
     }
 }

@@ -21,7 +21,7 @@ public static partial class Module
         while (entityUpdate.DeltaTime >= config.UpdateEntityInterval)
         {
             var playerInputs = ctx.Db.PlayerInput.SequenceId.Filter(entityUpdate.SequenceId)
-                .GroupBy(pi => pi.PlayerId)
+                .GroupBy(pi => pi.EntityId)
                 .Select(grp => (grp.Key, grp.First()))
                 .ToDictionary();
 

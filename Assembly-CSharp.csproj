@@ -48,6 +48,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\server-types\Reducers\Disconnect.g.cs" />
+    <Compile Include="Assets\UserInterface\MainMenu.cs" />
+    <Compile Include="Assets\Scripts\LatencyChart.cs" />
+    <Compile Include="Assets\Scripts\PrefabManager.cs" />
+    <Compile Include="Assets\server-types\Types\EntityUpdate.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\BoundingBox.cs" />
+    <Compile Include="Assets\server-types\Types\PlayerInput.g.cs" />
+    <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\server-types\Reducers\EnterGame.g.cs" />
+    <Compile Include="Assets\Scripts\CameraMovement.cs" />
+    <Compile Include="Assets\Scripts\ServerEntityMovement.cs" />
+    <Compile Include="Assets\server-types\Tables\MoveAllEntitiesTimer.g.cs" />
+    <Compile Include="Assets\Scripts\NetworkTime.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Entity.cs" />
+    <Compile Include="Assets\Scripts\Simulation.cs" />
+    <Compile Include="Assets\server-types\Reducers\UpdatePlayerInput.g.cs" />
+    <Compile Include="Assets\Scripts\EntityInterpolation.cs" />
+    <Compile Include="Assets\Scripts\UpdateRateCache.cs" />
+    <Compile Include="Assets\server-types\Tables\Player.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
     <Compile Include="Assets\server-types\Tables\Config.g.cs" />
@@ -56,43 +74,25 @@
     <Compile Include="Assets\server-types\Reducers\Connect.g.cs" />
     <Compile Include="Assets\server-types\Types\MapTile.g.cs" />
     <Compile Include="Assets\server-types\Types\Entity.g.cs" />
-    <Compile Include="Assets\UserInterface\MainMenu.cs" />
     <Compile Include="Assets\server-types\Tables\EntityUpdate.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Line.cs" />
-    <Compile Include="Assets\Scripts\LatencyChart.cs" />
     <Compile Include="Assets\Scripts\SimulationState.cs" />
-    <Compile Include="Assets\Scripts\PrefabManager.cs" />
-    <Compile Include="Assets\server-types\Types\EntityUpdate.g.cs" />
     <Compile Include="Assets\Scripts\InputState.cs" />
-    <Compile Include="Assets\Scripts\SharedPhysics\BoundingBox.cs" />
-    <Compile Include="Assets\server-types\Types\PlayerInput.g.cs" />
     <Compile Include="Assets\Scripts\EntityController.cs" />
-    <Compile Include="Assets\Scripts\PlayerController.cs" />
-    <Compile Include="Assets\server-types\Reducers\EnterGame.g.cs" />
     <Compile Include="Assets\Scripts\PlayerMovement.cs" />
     <Compile Include="Assets\server-types\Tables\MapTile.g.cs" />
     <Compile Include="Assets\server-types\Types\Input.g.cs" />
     <Compile Include="Assets\Scripts\StringExtensions.cs" />
-    <Compile Include="Assets\Scripts\CameraMovement.cs" />
-    <Compile Include="Assets\Scripts\ServerEntityMovement.cs" />
     <Compile Include="Assets\server-types\Types\Config.g.cs" />
     <Compile Include="Assets\server-types\Types\DbVector2.g.cs" />
     <Compile Include="Assets\server-types\Reducers\MoveAllEntities.g.cs" />
     <Compile Include="Assets\server-types\Types\Faction.g.cs" />
-    <Compile Include="Assets\server-types\Tables\MoveAllEntitiesTimer.g.cs" />
-    <Compile Include="Assets\Scripts\NetworkTime.cs" />
     <Compile Include="Assets\Scripts\Vector2Extensions.cs" />
     <Compile Include="Assets\Scripts\EntityAnimator.cs" />
-    <Compile Include="Assets\Scripts\SharedPhysics\Entity.cs" />
-    <Compile Include="Assets\Scripts\Simulation.cs" />
     <Compile Include="Assets\server-types\Tables\Entity.g.cs" />
     <Compile Include="Assets\server-types\SpacetimeDBClient.g.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\server-types\Types\Line.g.cs" />
-    <Compile Include="Assets\server-types\Reducers\UpdatePlayerInput.g.cs" />
-    <Compile Include="Assets\Scripts\EntityInterpolation.cs" />
-    <Compile Include="Assets\Scripts\UpdateRateCache.cs" />
-    <Compile Include="Assets\server-types\Tables\Player.g.cs" />
     <Compile Include="Assets\Scripts\IPublisher.cs" />
     <Compile Include="Assets\server-types\Types\MoveAllEntitiesTimer.g.cs" />
     <Compile Include="Assets\server-types\Types\Player.g.cs" />
@@ -486,6 +486,12 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.nuget.newtonsoft-json@74deb55db2a0\Runtime\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.nuget.mono-cecil@d6f9955a5d5f\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Collections.LowLevel.ILSupport">
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collections@56bff8827a7e\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+    </Reference>
     <Reference Include="netstandard">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\NetStandard\ref\2.1.0\netstandard.dll</HintPath>
     </Reference>
@@ -852,6 +858,102 @@
     <Reference Include="System.Xml.Serialization">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.InputSystem.ForUI">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.UI">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.AI.Navigation">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Rider.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Searcher.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Cinemachine.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Shaders">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Multiplayer.PlayMode.Scenarios.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime.Shared">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Timeline.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ShaderGraph.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Timeline">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TestTools.CodeCoverage.Editor.OpenCover.Model">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TestTools.CodeCoverage.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.PlasticSCM.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Multiplayer.Center.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Splines">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Mathematics.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Performance.Profile-Analyzer.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Performance.Profile-Analyzer.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="XCharts.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.GPUDriven.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.GPUDriven.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Cinemachine">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
+    </Reference>
+    <Reference Include="XCharts.Examples">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Collections">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="PPv2URPConverters">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Rendering.LightTransport.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Multiplayer.Playmode">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Playmode.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.VisualScripting.Core">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
+    </Reference>
     <Reference Include="com.clockworklabs.spacetimedbsdk">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\com.clockworklabs.spacetimedbsdk.dll</HintPath>
     </Reference>
@@ -861,20 +963,20 @@
     <Reference Include="XCharts.Runtime">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.InputSystem.ForUI">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.Universal.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Config.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Config.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Configurations.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Configurations.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEditor.UI">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    <Reference Include="Unity.Collections.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Collections.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Rider.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.AI.Navigation">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Shared.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
@@ -897,23 +999,14 @@
     <Reference Include="Unity.VisualScripting.Flow.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Cinemachine.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Multiplayer.PlayMode.Scenarios.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.EditorCoroutines.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.EditorCoroutines.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Timeline.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Timeline">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
+    <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
@@ -924,47 +1017,20 @@
     <Reference Include="Unity.Mathematics">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.TestTools.CodeCoverage.Editor.OpenCover.Model">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TestTools.CodeCoverage.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.Core.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Settings.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Settings.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.PlasticSCM.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Splines">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Multiplayer.Center.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Mathematics.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Performance.Profile-Analyzer.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Performance.Profile-Analyzer.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="XCharts.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Cinemachine">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Analytics.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Analytics.Editor.dll</HintPath>
@@ -972,23 +1038,29 @@
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="XCharts.Examples">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
+    <Reference Include="Unity.Burst.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Burst.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Burst">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Burst.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualScripting.Flow">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Multiplayer.Playmode">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Playmode.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.VisualScripting.Core">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
+    <Reference Include="Unity.Rendering.LightTransport.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rendering.LightTransport.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.2D.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.2D.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

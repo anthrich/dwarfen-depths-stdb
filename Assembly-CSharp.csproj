@@ -69,6 +69,7 @@
     <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
     <Compile Include="Assets\server-types\Tables\Config.g.cs" />
+    <Compile Include="Assets\Scripts\PlayerTargetting.cs" />
     <Compile Include="Assets\server-types\Tables\PlayerInput.g.cs" />
     <Compile Include="Assets\server-types\Reducers\Connect.g.cs" />
     <Compile Include="Assets\server-types\Tables\Line.g.cs" />
@@ -104,6 +105,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\UserInterface\MainMenu.uxml" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
+    <None Include="Assets\TargetCircleDecal.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\SDFFunctions.hlsl" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />

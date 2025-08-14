@@ -13,6 +13,7 @@ public class PrefabManager : MonoBehaviour
     public MeshFilter wallMeshPrefab;
     public MeshFilter roofMeshPrefab;
     public GameObject mapContainer;
+    public Material targetCircleMaterial;
 
     private void Awake()
     {
@@ -71,6 +72,8 @@ public class PrefabManager : MonoBehaviour
         playerInput.enabled = true;
         var playerMovement = entityController.gameObject.AddComponent<PlayerMovement>();
         var cameraMovement = entityController.gameObject.AddComponent<CameraMovement>();
+        var playerTargetting = entityController.gameObject.AddComponent<PlayerTargetting>();
+        playerTargetting.circleMaterial = _instance.targetCircleMaterial;
         cameraMovement.Init(GameManager.Instance.cinemachineCamera, playerInput);
         Simulation.Instance.Subscribe(playerMovement);
         Simulation.Instance.Subscribe(_instance.latencyChart);

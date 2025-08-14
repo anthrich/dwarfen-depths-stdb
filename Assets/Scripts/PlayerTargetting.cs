@@ -9,7 +9,6 @@ public class PlayerTargetting : MonoBehaviour
     private static readonly int Alpha = Shader.PropertyToID("_Alpha");
     private static readonly int Color1 = Shader.PropertyToID("_Color");
     private static readonly int Radius = Shader.PropertyToID("_Radius");
-    private static readonly int EdgeSoftness = Shader.PropertyToID("_EdgeSoftness");
 
     [Header("Reticle")]
     public Material circleMaterial;
@@ -39,7 +38,6 @@ public class PlayerTargetting : MonoBehaviour
             _materialInstance = new Material(circleMaterial);
             _materialInstance.SetColor(Color1, circleColor);
             _materialInstance.SetFloat(Radius, circleRadius);
-            _materialInstance.SetFloat(EdgeSoftness, circleRadius * 0.1f);
         }
         
         if (!circleQuad)

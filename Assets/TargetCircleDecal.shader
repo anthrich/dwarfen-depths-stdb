@@ -4,6 +4,7 @@ Shader "Custom/TargetCircleDecal"
     {
         _Color ("Circle Color", Color) = (1, 0, 0, 1)
         _Radius ("Circle Radius", Float) = 2.0
+        _EdgeSoftness ("Edge Softness", Float) = 0.2
         _LineThickness ("Line Thickness (pixels)", Float) = 2.0
         _TargetPosition ("Target Position", Vector) = (0, 0, 0, 0)
         _Alpha ("Alpha", Range(0, 1)) = 1.0
@@ -65,17 +66,16 @@ Shader "Custom/TargetCircleDecal"
                 // Create ring with pixel-based thickness
                 float outerRadius = _Radius;
                 float innerRadius = _Radius - worldLineThickness;
-                float ring = smoothstep(innerRadius, innerRadius, distance) - 
-                           smoothstep(outerRadius, outerRadius, distance);
+                float ring = step(innerRadius, distance) - step(outerRadius, distance);
                 
                 // Create dotted pattern
                 float2 direction = normalize(worldPosXZ - targetPosXZ);
                 float angle = atan2(direction.y, direction.x);
-                float normalizedAngle = (angle + 3.14159) / (2.0 * 3.14159); // 0 to 1
+                float normalizedAngle = (angle + UNITY_PI) / (2.0 * UNITY_PI); // 0 to 1
                 
                 float dotCount = 24.0; // Number of dots around the ring
-                float dotPattern = sin(normalizedAngle * dotCount * 3.14159);
-                float dots = smoothstep(0.2, 0.8, dotPattern); // Controls dot vs gap ratio
+                float dotPattern = frac(normalizedAngle * dotCount); // Sawtooth 0-1
+                float dots = step(0.15, dotPattern); // 0.1 = 10% gaps, 90% lines
                 
                 fixed4 col = _Color;
                 col.a *= ring * dots * _Alpha;

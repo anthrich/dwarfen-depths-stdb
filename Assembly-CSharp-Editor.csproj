@@ -411,6 +411,9 @@
     <Reference Include="Unity.VisualScripting.YamlDotNet">
       <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.visualscripting@6279e2b7c485\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Collections.LowLevel.ILSupport">
+      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collections@56bff8827a7e\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.ext.nunit@031a54704bff\net40\unity-custom\nunit.framework.dll</HintPath>
     </Reference>
@@ -446,9 +449,6 @@
     </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.nuget.mono-cecil@d6f9955a5d5f\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Collections.LowLevel.ILSupport">
-      <HintPath>C:\Repos\DwarfenDepths\Library\PackageCache\com.unity.collections@56bff8827a7e\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.1.13f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>
@@ -837,23 +837,23 @@
     <Reference Include="UnityEditor.UI">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.AI.Navigation">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
+    <Reference Include="Unity.Searcher.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Rider.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Searcher.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
+    <Reference Include="Unity.AI.Navigation">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Cinemachine.Editor">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.RenderPipelines.Universal.Shaders">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Cinemachine.Editor">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Scenarios.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Scenarios.Editor.dll</HintPath>
@@ -873,11 +873,14 @@
     <Reference Include="Unity.TestTools.CodeCoverage.Editor.OpenCover.Model">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.OpenCover.Model.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TestTools.CodeCoverage.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.TestTools.CodeCoverage.Editor.dll</HintPath>
@@ -887,9 +890,6 @@
     </Reference>
     <Reference Include="Unity.Multiplayer.Center.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.Center.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Splines">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.dll</HintPath>
@@ -909,11 +909,11 @@
     <Reference Include="Unity.Cinemachine">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Cinemachine.dll</HintPath>
     </Reference>
-    <Reference Include="XCharts.Examples">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.Collections">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="XCharts.Examples">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Examples.dll</HintPath>
     </Reference>
     <Reference Include="PPv2URPConverters">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
@@ -933,14 +933,14 @@
     <Reference Include="Unity.Splines.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Splines.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="XCharts.Runtime">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Runtime.dll</HintPath>
+    <Reference Include="Unity.RenderPipelines.Universal.Config.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Config.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Universal.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.RenderPipelines.Universal.Config.Runtime">
-      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Config.Runtime.dll</HintPath>
+    <Reference Include="XCharts.Runtime">
+      <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\XCharts.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Multiplayer.PlayMode.Configurations.Editor">
       <HintPath>C:\Repos\DwarfenDepths\Library\ScriptAssemblies\Unity.Multiplayer.PlayMode.Configurations.Editor.dll</HintPath>

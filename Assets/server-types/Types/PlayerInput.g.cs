@@ -21,6 +21,8 @@ namespace SpacetimeDB.Types
         public uint EntityId;
         [DataMember(Name = "SequenceId")]
         public ulong SequenceId;
+        [DataMember(Name = "TargetEntityId")]
+        public uint TargetEntityId;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
 
@@ -28,12 +30,14 @@ namespace SpacetimeDB.Types
             ulong Id,
             uint EntityId,
             ulong SequenceId,
+            uint TargetEntityId,
             DbVector2 Direction
         )
         {
             this.Id = Id;
             this.EntityId = EntityId;
             this.SequenceId = SequenceId;
+            this.TargetEntityId = TargetEntityId;
             this.Direction = Direction;
         }
 

@@ -19,7 +19,8 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     private DateTimeOffset _lastClientUpdateAt;
     
     private UnityEngine.Vector2 _inputDirection;
-    private Entity[] _simulationStateCache = new Entity[CacheSize];
+    private uint _targetId;
+    private readonly Entity[] _simulationStateCache = new Entity[CacheSize];
     private Entity _localPlayerEntity;
     
     private Entity _serverEntityState;
@@ -59,6 +60,11 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     {
         _inputDirection = direction;
     }
+
+    public void SetTarget(EntityController target)
+    {
+        _targetId = target.entityId;
+    }
     
     public void OnEntityUpdated(Entity newServerEntityState)
     {
@@ -97,7 +103,12 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
             );
             _lastClientUpdateAt = DateTimeOffset.Now;
             _accumulatedDeltaTime -= _serverUpdateInterval;
-            var input = new InputState { Direction = _inputDirection, SequenceId = _currentSequenceId };
+            var input = new InputState
+            {
+                Direction = _inputDirection,
+                SequenceId = _currentSequenceId,
+                TargetEntityId = _targetId,
+            };
             _localPlayerEntity.Direction = _inputDirection.ToSharedPhysicsV2();
             
             var result = Engine.Simulate(
@@ -170,7 +181,9 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     
     private void SendInput(InputState inputState)
     {
-        _inputsAheadOfSimulation.Add(new Input(inputState.SequenceId, inputState.Direction.ToDbVector2()));
+        _inputsAheadOfSimulation.Add(
+            new Input(inputState.SequenceId, inputState.Direction.ToDbVector2(), inputState.TargetEntityId)
+        );
         if(_inputsAheadOfSimulation.Count > 12) _inputsAheadOfSimulation.RemoveAt(0);
         GameManager.SendInput(_inputsAheadOfSimulation);
     }

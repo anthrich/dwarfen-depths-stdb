@@ -11,7 +11,7 @@ public class NetworkTime : MonoBehaviour
     [UsedImplicitly]
     public void OnPlayerUpdated(Player newPlayer)
     {
-        if (newPlayer.PlayerId != GameManager.LocalPlayer.EntityId) return;
+        if (newPlayer.EntityId != GameManager.LocalPlayer.EntityId) return;
         timeScale = newPlayer.SimulationOffset switch
         {
             < -10 => 3f,

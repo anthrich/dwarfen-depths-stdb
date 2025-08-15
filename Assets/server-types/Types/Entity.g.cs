@@ -27,6 +27,8 @@ namespace SpacetimeDB.Types
         public ulong SequenceId;
         [DataMember(Name = "Allegiance")]
         public Faction Allegiance;
+        [DataMember(Name = "TargetEntityId")]
+        public uint TargetEntityId;
 
         public Entity(
             uint EntityId,
@@ -34,7 +36,8 @@ namespace SpacetimeDB.Types
             DbVector2 Position,
             DbVector2 Direction,
             ulong SequenceId,
-            Faction Allegiance
+            Faction Allegiance,
+            uint TargetEntityId
         )
         {
             this.EntityId = EntityId;
@@ -43,6 +46,7 @@ namespace SpacetimeDB.Types
             this.Direction = Direction;
             this.SequenceId = SequenceId;
             this.Allegiance = Allegiance;
+            this.TargetEntityId = TargetEntityId;
         }
 
         public Entity()

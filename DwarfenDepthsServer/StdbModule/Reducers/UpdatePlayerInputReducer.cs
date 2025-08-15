@@ -15,6 +15,7 @@ public static partial class Module
                     EntityId = player.EntityId,
                     Direction = input.Direction,
                     SequenceId = input.SequenceId,
+                    TargetEntityId = input.TargetEntityId
                 }
             );
         }

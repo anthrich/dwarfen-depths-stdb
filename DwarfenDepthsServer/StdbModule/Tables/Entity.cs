@@ -12,6 +12,7 @@ public static partial class Module
         public DbVector2 Direction;
         public ulong SequenceId;
         public Faction Allegiance;
+        public uint TargetEntityId;
 
         public static SharedPhysics.Entity ToPhysics(Entity entity)
         {

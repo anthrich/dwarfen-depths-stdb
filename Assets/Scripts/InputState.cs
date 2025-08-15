@@ -7,4 +7,5 @@ public struct InputState
         
     public Vector2 Direction;
     public ulong SequenceId;
+    public uint TargetEntityId;
 }

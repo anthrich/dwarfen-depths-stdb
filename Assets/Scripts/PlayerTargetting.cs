@@ -24,7 +24,8 @@ public class PlayerTargetting : MonoBehaviour
 
     [Header("Target")]
     public LayerMask targetLayerMask = 0;
-    public GameObject currentTarget;
+    public EntityController currentTarget;
+    public float targettingRange = 30f;
     
     private readonly Collider[] _colliders = new Collider[5];
     private Material _materialInstance;
@@ -49,7 +50,7 @@ public class PlayerTargetting : MonoBehaviour
     [UsedImplicitly]
     private void OnSwitchTarget(InputValue value)
     {
-        var size = Physics.OverlapSphereNonAlloc(transform.position, 25f, _colliders, targetLayerMask);
+        var size = Physics.OverlapSphereNonAlloc(transform.position, targettingRange, _colliders, targetLayerMask);
         size = Math.Min(size, _colliders.Length);
         
         for (int i = 0; i < size; i++)
@@ -59,14 +60,12 @@ public class PlayerTargetting : MonoBehaviour
             var dotProduct = Vector3.Dot(playerForward, dirToTarget);
             var isInFront = dotProduct > 0.5f;
             if (!isInFront) continue;
-            currentTarget = _colliders[i].gameObject;
+            currentTarget = _colliders[i].GetComponent<EntityController>();
             break;
         }
 
-        if (currentTarget)
-        {
-            circleQuad.SetActive(true);
-        }
+        circleQuad.SetActive(currentTarget);
+        if(currentTarget) Simulation.Instance.SetTarget(currentTarget);
     }
     
     void Update()

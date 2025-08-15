@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -49,14 +48,14 @@ public class PlayerMovement :
         if(newInput.ApproximatesTo(_movementInput)) return;
         _movementInput = newInput;
         _movement = TransformMovementWithCamera();
-        Simulation.Instance.SetInputState(new InputState { Direction = _movement });
+        Simulation.Instance.SetInputDirection(_movement);
     }
 
     [UsedImplicitly]
     private void OnLookApplied()
     {
         _movement = TransformMovementWithCamera();
-        Simulation.Instance.SetInputState(new InputState { Direction = _movement });
+        Simulation.Instance.SetInputDirection(_movement);
     }
 
     private Vector2 TransformMovementWithCamera()

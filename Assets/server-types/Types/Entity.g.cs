@@ -23,6 +23,8 @@ namespace SpacetimeDB.Types
         public DbVector2 Position;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
+        [DataMember(Name = "Rotation")]
+        public float Rotation;
         [DataMember(Name = "SequenceId")]
         public ulong SequenceId;
         [DataMember(Name = "Allegiance")]
@@ -35,6 +37,7 @@ namespace SpacetimeDB.Types
             float Speed,
             DbVector2 Position,
             DbVector2 Direction,
+            float Rotation,
             ulong SequenceId,
             Faction Allegiance,
             uint TargetEntityId
@@ -44,6 +47,7 @@ namespace SpacetimeDB.Types
             this.Speed = Speed;
             this.Position = Position;
             this.Direction = Direction;
+            this.Rotation = Rotation;
             this.SequenceId = SequenceId;
             this.Allegiance = Allegiance;
             this.TargetEntityId = TargetEntityId;

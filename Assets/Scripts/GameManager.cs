@@ -184,6 +184,7 @@ public class GameManager : MonoBehaviour
 
     private void OnGameEntered(ReducerEventContext context, string playerName)
     {
+        Debug.Log($"Game entered: {playerName}");
         var player = Conn.Db.Player.Identity.Find(LocalIdentity);
         if(player == default) return;
         LocalPlayer.EntityId = player.EntityId;
@@ -204,6 +205,7 @@ public class GameManager : MonoBehaviour
             Speed = dbEntity.Speed
         });
         Entities.Add(LocalPlayer.EntityId, entityController);
+        Conn.Reducers.OnEnterGame -= OnGameEntered;
     }
 
     private void OnDbPlayerUpdated(EventContext context, Player oldPlayer, Player newPlayer)

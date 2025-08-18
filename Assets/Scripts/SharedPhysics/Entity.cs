@@ -9,11 +9,12 @@ namespace SharedPhysics
         public float Speed;
         public Vector2 Position;
         public Vector2 Direction;
+        public float Rotation;
         public ulong SequenceId;
 
         public override string ToString()
         {
-            return $"{{Id: {Id}, Seq: {SequenceId}, Speed: {Speed}, Pos: {Position}, Dir: {Direction}}}";
+            return $"{{Id: {Id}, Seq: {SequenceId}, Speed: {Speed}, Pos: {Position}, Dir: {Direction}, Rot: {Rotation}}}";
         }
     }
 }

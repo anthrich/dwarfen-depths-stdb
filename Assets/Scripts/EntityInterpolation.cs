@@ -22,12 +22,7 @@ public class EntityInterpolation : MonoBehaviour
         _current = position;
         _lerpTime = 0.0f;
     }
-
-    public Vector3 GetCanonicalPosition()
-    {
-        return _current;
-    }
-
+    
     public void SetMovementDirection(Vector3 movementDirection)
     {
         _movementDirection = movementDirection.normalized;
@@ -37,10 +32,10 @@ public class EntityInterpolation : MonoBehaviour
     {
         _lerpTime = Mathf.Min(_lerpTime + Time.deltaTime, lerpDuration);
         transform.position = Vector3.Lerp(_previous, _current, _lerpTime / lerpDuration);
-        if (_movementDirection.magnitude < 0.001f) return;
+        /*if (_movementDirection.magnitude < 0.001f) return;
         var newDirection = Vector3.RotateTowards(
             transform.forward, _movementDirection, rotationPerSecond * Time.deltaTime, 0.0f
         );
-        transform.rotation = Quaternion.LookRotation(newDirection);
+        transform.rotation = Quaternion.LookRotation(newDirection);*/
     }
 }

@@ -63,15 +63,11 @@ namespace SharedPhysics
                     targetPosition = safePosition + glideMovement;
                     movementLine = new Line(entity.Position, targetPosition);
                 }
-                
-                processed[i] = new Entity
-                {
-                    Id = entity.Id,
-                    Position = targetPosition,
-                    Direction = entity.Direction,
-                    Speed = entity.Speed,
-                    SequenceId = sequenceId
-                };
+
+                processed[i] = entity;
+                processed[i].Position = targetPosition;
+                processed[i].SequenceId = sequenceId;
+
                 i++;
             }
             

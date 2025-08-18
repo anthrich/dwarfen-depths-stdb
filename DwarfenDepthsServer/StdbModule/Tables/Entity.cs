@@ -10,6 +10,7 @@ public static partial class Module
         public float Speed;
         public DbVector2 Position;
         public DbVector2 Direction;
+        public float Rotation;
         public ulong SequenceId;
         public Faction Allegiance;
         public uint TargetEntityId;
@@ -22,7 +23,8 @@ public static partial class Module
                 Position = DbVector2.ToPhysics(entity.Position),
                 Direction = DbVector2.ToPhysics(entity.Direction),
                 Speed = entity.Speed,
-                SequenceId = entity.SequenceId
+                SequenceId = entity.SequenceId,
+                Rotation = entity.Rotation,
             };
         }
 
@@ -34,7 +36,8 @@ public static partial class Module
                 Position = DbVector2.ToDb(entity.Position),
                 Direction = DbVector2.ToDb(entity.Direction),
                 Speed = entity.Speed,
-                SequenceId = entity.SequenceId
+                SequenceId = entity.SequenceId,
+                Rotation = entity.Rotation,
             };
         }
     }

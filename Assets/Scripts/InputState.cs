@@ -6,6 +6,7 @@ public struct InputState
         @is.Direction == Vector2.zero && @is.SequenceId == 0;
         
     public Vector2 Direction;
+    public float YRotation;
     public ulong SequenceId;
     public uint TargetEntityId;
 }

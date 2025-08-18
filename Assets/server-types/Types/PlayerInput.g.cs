@@ -25,13 +25,16 @@ namespace SpacetimeDB.Types
         public uint TargetEntityId;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
+        [DataMember(Name = "Rotation")]
+        public float Rotation;
 
         public PlayerInput(
             ulong Id,
             uint EntityId,
             ulong SequenceId,
             uint TargetEntityId,
-            DbVector2 Direction
+            DbVector2 Direction,
+            float Rotation
         )
         {
             this.Id = Id;
@@ -39,6 +42,7 @@ namespace SpacetimeDB.Types
             this.SequenceId = SequenceId;
             this.TargetEntityId = TargetEntityId;
             this.Direction = Direction;
+            this.Rotation = Rotation;
         }
 
         public PlayerInput()

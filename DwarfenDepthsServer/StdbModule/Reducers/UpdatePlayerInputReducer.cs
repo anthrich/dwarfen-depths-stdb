@@ -9,15 +9,15 @@ public static partial class Module
         foreach (var input in inputs)
         {
             ctx.Db.PlayerInput.EntityId_SequenceId.Delete((player.EntityId, input.SequenceId));
-            ctx.Db.PlayerInput.Insert(
-                new PlayerInput
-                {
-                    EntityId = player.EntityId,
-                    Direction = input.Direction,
-                    SequenceId = input.SequenceId,
-                    TargetEntityId = input.TargetEntityId
-                }
-            );
+            var playerInput = new PlayerInput
+            {
+                EntityId = player.EntityId,
+                Direction = input.Direction,
+                SequenceId = input.SequenceId,
+                TargetEntityId = input.TargetEntityId,
+                Rotation = input.Rotation,
+            };
+            ctx.Db.PlayerInput.Insert(playerInput);
         }
 
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("Entity update not found");

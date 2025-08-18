@@ -14,6 +14,12 @@ public class ServerEntityMovement : MonoBehaviour
     {
         _yPos = transform.position.y;
         transform.position = entity.Position.ToGamePosition(_yPos);
+        SetRotation(entity.Rotation);
+    }
+
+    private void SetRotation(float yRotation)
+    {
+        transform.rotation = Quaternion.Euler(0, yRotation, 0);
     }
 
     private void Start()
@@ -31,5 +37,6 @@ public class ServerEntityMovement : MonoBehaviour
         entityInterpolation?.SetCanonicalPosition(position);
         entityInterpolation?.SetMovementDirection(direction);
         entityAnimator?.SetDirection(direction);
+        SetRotation(newServerEntityState.Rotation);
     }
 }

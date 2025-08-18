@@ -60,8 +60,8 @@ public static partial class Module
         SharedPhysics.Line[] lines)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
-        var direction = hasInput ? playerInput.Direction : entity.Direction;
-        entity.Direction = direction;
+        entity.Direction = hasInput ? playerInput.Direction : entity.Direction;
+        entity.Rotation = hasInput ? playerInput.Rotation : entity.Rotation;
         
         var simulated = Engine.Simulate(
             config.UpdateEntityInterval,

@@ -45,25 +45,27 @@ public class PlayerMovement :
     private void OnMove(InputValue value)
     {
         var newInput = value.Get<Vector2>();
-        if(newInput.ApproximatesTo(_movementInput)) return;
         _movementInput = newInput;
-        _movement = TransformMovementWithCamera();
-        Simulation.Instance.SetInputDirection(_movement);
+        UpdateMovement();
     }
 
     [UsedImplicitly]
     private void OnLookApplied()
     {
-        _movement = TransformMovementWithCamera();
-        Simulation.Instance.SetInputDirection(_movement);
+        var cameraForward = cameraTransform.forward;
+        cameraForward.y = 0;
+        transform.rotation = Quaternion.LookRotation(cameraForward);
+        UpdateMovement();
     }
 
-    private Vector2 TransformMovementWithCamera()
+    private void UpdateMovement()
     {
-        var transformedMovement = cameraTransform.TransformDirection(_movementInput.ToGamePosition(_yPosition));
+        var transformedMovement = transform.TransformDirection(_movementInput.ToGamePosition(_yPosition));
         transformedMovement.y = 0;
         transformedMovement = transformedMovement.normalized;
-        return new Vector2(transformedMovement.x, transformedMovement.z);
+        _movement =  new Vector2(transformedMovement.x, transformedMovement.z);
+        Simulation.Instance.SetInputDirection(_movement);
+        Simulation.Instance.SetInputRotation(transform.rotation.eulerAngles.y);
     }
 
     private void Update()

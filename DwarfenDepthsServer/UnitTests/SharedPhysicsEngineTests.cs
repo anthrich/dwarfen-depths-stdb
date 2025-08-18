@@ -147,4 +147,29 @@ public class SharedPhysicsEngineTests
         // Assert
         Assert.True(result[0].Position.X > 1, "X position should not be stuck in the wall");
     }
+    
+    [Fact]
+    public void Simulating_does_not_clear_rotation()
+    {
+        // Arrange
+        var entities = new Entity[]
+        {
+            new()
+            {
+                Id = 1,
+                Position = new Vector2(1, 1),
+                SequenceId = 1,
+                Direction = new Vector2(1, 1).Normalized(),
+                Speed = 10f,
+                Rotation = 65f
+            }
+        };
+        const float deltaTime = 0.05f;
+        
+        // Act
+        var result = Engine.Simulate(deltaTime, 2, entities, []);
+        
+        // Assert
+        Assert.NotEqual(0, result[0].Rotation);
+    }
 }

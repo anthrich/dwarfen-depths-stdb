@@ -71,7 +71,7 @@ public class PlayerMovement :
     private void Update()
     {
         entityInterpolation.SetMovementDirection(_movement.ToGamePosition(_yPosition));
-        entityAnimator.SetDirection(_movement);
+        entityAnimator.SetMovement(_movement, _movementInput);
     }
 
     public void SubscriptionUpdate(SharedPhysics.Entity update)

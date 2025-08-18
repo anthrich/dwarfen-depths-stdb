@@ -34,9 +34,10 @@ public class ServerEntityMovement : MonoBehaviour
     {
         var position = newServerEntityState.Position.ToGamePosition(_yPos);
         var direction = newServerEntityState.Direction.ToGamePosition(_yPos);
+        SetRotation(newServerEntityState.Rotation);
         entityInterpolation?.SetCanonicalPosition(position);
         entityInterpolation?.SetMovementDirection(direction);
-        entityAnimator?.SetDirection(direction);
-        SetRotation(newServerEntityState.Rotation);
+        var relativeDirection = transform.InverseTransformDirection(direction);
+        entityAnimator?.SetMovement(direction, new Vector2(relativeDirection.x, relativeDirection.z));
     }
 }

@@ -17,7 +17,7 @@ public static class Vector2Extensions
     {
         return new SharedPhysics.Vector2(vec.x, vec.y);
     }
-    
+
     public static Vector3 ToGamePosition(this Vector2 vec, float yPos)
     {
         return new Vector3(vec.x, yPos, vec.y);

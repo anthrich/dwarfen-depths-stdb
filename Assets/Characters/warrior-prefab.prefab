@@ -431,3 +431,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 2430318053438012721}
+  movementDamping: 0.05

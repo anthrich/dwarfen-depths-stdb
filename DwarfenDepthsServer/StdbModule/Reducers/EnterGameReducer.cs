@@ -21,7 +21,7 @@ public static partial class Module
             Position = mapTile.Position,
             Direction = new DbVector2(0,0),
             SequenceId = entityUpdate.SequenceId,
-            Speed = 10f
+            Speed = 7f
         });
         player.EntityId = playerEntity.EntityId;
         ctx.Db.Player.Identity.Update(player);

@@ -933,8 +933,8 @@ RectTransform:
   - {fileID: 1007274399}
   - {fileID: 735098122}
   - {fileID: 1209818424}
-  - {fileID: 1359611260}
   - {fileID: 771406044}
+  - {fileID: 1359611260}
   m_Father: {fileID: 882912809}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -10434,6 +10434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d2999a857f35bc44a9ce66019e24515, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  menuAction: {fileID: 3048221788247077398, guid: d54a618a7783f564e91dd5bfae75cb80, type: 3}
 --- !u!1 &799028028
 GameObject:
   m_ObjectHideFlags: 1
@@ -21114,7 +21115,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1521034279870936410, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: Radius
-      value: 6
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2516233996505991149, guid: 925029b7027c11a49a45821818a81107, type: 3}
       propertyPath: m_Name

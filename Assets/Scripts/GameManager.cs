@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     const string ModuleName = "dwarfen-depths";
 
     public static event Action OnConnected;
+    public static event Action OnDisconnected;
     public static event Action OnSubscriptionApplied;
 
 	public static GameManager Instance { get; private set; }
@@ -56,7 +57,6 @@ public class GameManager : MonoBehaviour
         Conn = builder.Build();
     }
 
-    // Called when we connect to SpacetimeDB and receive our client identity
     void HandleConnect(DbConnection conn, Identity identity, string token)
     {
         Debug.Log("Connected.");
@@ -70,7 +70,6 @@ public class GameManager : MonoBehaviour
         conn.Db.Player.OnUpdate += OnDbPlayerUpdated;
         conn.Db.MapTile.OnInsert += OnMapTileInserted;
         conn.Db.Line.OnInsert += LineOnOnInsert;
-
         
         Conn.SubscriptionBuilder()
             .Subscribe(new []
@@ -86,13 +85,6 @@ public class GameManager : MonoBehaviour
         OnConnected?.Invoke();
     }
 
-    private void LineOnOnInsert(EventContext context, Line row)
-    {
-        var line = new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y));
-        Simulation.Instance.Register(line);
-        PrefabManager.SpawnWall(line);
-    }
-
     void HandleConnectError(Exception ex)
     {
         Debug.LogError($"Connection error: {ex}");
@@ -105,6 +97,7 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogException(ex);
         }
+        OnDisconnected?.Invoke();
     }
 
     private void HandleSubscriptionApplied(SubscriptionEventContext ctx)
@@ -127,6 +120,13 @@ public class GameManager : MonoBehaviour
     public static void SendInput(List<Input> inputs)
     {
         if(IsConnected() && LocalPlayer) Conn.Reducers.UpdatePlayerInput(inputs);
+    }
+
+    private void LineOnOnInsert(EventContext context, Line row)
+    {
+        var line = new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y));
+        Simulation.Instance.Register(line);
+        PrefabManager.SpawnWall(line);
     }
 
     private static void OnMapTileInserted(EventContext context, MapTile tile)

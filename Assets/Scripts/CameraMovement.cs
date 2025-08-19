@@ -7,11 +7,13 @@ using UnityEngine.InputSystem;
 public class CameraMovement : MonoBehaviour
 {
     public bool lookEnabled;
+    public bool freeLookEnabled;
     public float lookSensitivity = 0.2f;
     private Vector2 _lastMousePosition;
     private PlayerInput _playerInput;
     private CinemachineCamera _camera;
     private InputAction _enableLookAction;
+    private InputAction _enableFreeLookAction;
     private CinemachineOrbitalFollow _orbitalFollow;
     
     public void Init(CinemachineCamera cinemachineCamera, PlayerInput playerInput)
@@ -22,6 +24,9 @@ public class CameraMovement : MonoBehaviour
         _enableLookAction = _playerInput.actions.FindAction("EnableLook");
         _enableLookAction.performed += LookEnabled;
         _enableLookAction.canceled += LookDisabled;
+        _enableFreeLookAction = _playerInput.actions.FindAction("EnableFreeLook");
+        _enableFreeLookAction.performed += FreeLookEnabled;
+        _enableFreeLookAction.canceled += FreeLookDisabled;
     }
 
     private void OnDestroy()
@@ -32,6 +37,7 @@ public class CameraMovement : MonoBehaviour
 
     private void LookEnabled(InputAction.CallbackContext obj)
     {
+        freeLookEnabled = false;
         lookEnabled = true;
         _lastMousePosition = Mouse.current.position.ReadValue();
         Cursor.lockState = CursorLockMode.Locked;
@@ -45,6 +51,18 @@ public class CameraMovement : MonoBehaviour
         Mouse.current.WarpCursorPosition(_lastMousePosition);
         Cursor.visible = true;
     }
+    
+    private void FreeLookEnabled(InputAction.CallbackContext obj)
+    {
+        LookEnabled(obj);
+        freeLookEnabled = true;
+    }
+    
+    private void FreeLookDisabled(InputAction.CallbackContext obj)
+    {
+        freeLookEnabled = false;
+        LookDisabled(obj);
+    }
 
     [UsedImplicitly]
     private void OnLook(InputValue value)
@@ -54,7 +72,7 @@ public class CameraMovement : MonoBehaviour
         _orbitalFollow.HorizontalAxis.Value += inputVector2.x * lookSensitivity;
         _orbitalFollow.VerticalAxis.Value -= inputVector2.y * lookSensitivity;
         _orbitalFollow.VerticalAxis.Value = Mathf.Clamp(_orbitalFollow.VerticalAxis.Value, -10, 80);
-        SendMessage("OnLookApplied", SendMessageOptions.DontRequireReceiver);
+        if(!freeLookEnabled) SendMessage("OnLookApplied", SendMessageOptions.DontRequireReceiver);
     }
     
     [UsedImplicitly]

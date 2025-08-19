@@ -48,7 +48,7 @@
                     "id": "3a54f9c7-ad8d-4b82-90c9-313472f37b1d",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": "Hold(duration=0.01)",
+                    "interactions": "Hold(duration=0.08)",
                     "initialStateCheck": false
                 },
                 {
@@ -58,6 +58,15 @@
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "EnableFreeLook",
+                    "type": "Button",
+                    "id": "88f34d3e-562d-4197-9a9c-bac909919c72",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Hold(duration=0.08)",
                     "initialStateCheck": false
                 }
             ],
@@ -323,6 +332,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse;Gamepad;Touch",
                     "action": "SwitchTarget",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e7d36342-76f9-4a5e-935a-8ae492310467",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse;Touch",
+                    "action": "EnableFreeLook",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

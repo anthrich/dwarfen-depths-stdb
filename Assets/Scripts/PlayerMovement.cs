@@ -70,7 +70,6 @@ public class PlayerMovement :
 
     private void Update()
     {
-        entityInterpolation.SetMovementDirection(_movement.ToGamePosition(_yPosition));
         entityAnimator.SetMovement(_movement, _movementInput);
     }
 

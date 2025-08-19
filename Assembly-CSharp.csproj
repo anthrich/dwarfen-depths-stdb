@@ -63,7 +63,6 @@
     <Compile Include="Assets\Scripts\SharedPhysics\Entity.cs" />
     <Compile Include="Assets\Scripts\Simulation.cs" />
     <Compile Include="Assets\server-types\Reducers\UpdatePlayerInput.g.cs" />
-    <Compile Include="Assets\Scripts\EntityInterpolation.cs" />
     <Compile Include="Assets\Scripts\UpdateRateCache.cs" />
     <Compile Include="Assets\server-types\Tables\Player.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
@@ -77,6 +76,7 @@
     <Compile Include="Assets\server-types\Types\Entity.g.cs" />
     <Compile Include="Assets\server-types\Tables\EntityUpdate.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Line.cs" />
+    <Compile Include="Assets\Scripts\EntityPositionInterpolation.cs" />
     <Compile Include="Assets\Scripts\SimulationState.cs" />
     <Compile Include="Assets\Scripts\InputState.cs" />
     <Compile Include="Assets\Scripts\EntityController.cs" />
@@ -97,6 +97,7 @@
     <Compile Include="Assets\Scripts\IPublisher.cs" />
     <Compile Include="Assets\server-types\Types\MoveAllEntitiesTimer.g.cs" />
     <Compile Include="Assets\server-types\Types\Player.g.cs" />
+    <Compile Include="Assets\Scripts\EntityRotationInterpolation.cs" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />

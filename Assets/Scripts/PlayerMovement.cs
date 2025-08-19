@@ -1,17 +1,18 @@
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using Entity = SpacetimeDB.Types.Entity;
 using Vector2 = UnityEngine.Vector2;
 
-[RequireComponent(typeof(EntityInterpolation))]
+[RequireComponent(typeof(EntityPositionInterpolation))]
 [RequireComponent(typeof(EntityAnimator))]
 public class PlayerMovement :
     MonoBehaviour,
     ISubscriber<SharedPhysics.Entity>
 {
     public Transform cameraTransform;
-    public EntityInterpolation entityInterpolation;
+    [FormerlySerializedAs("entityInterpolation")] public EntityPositionInterpolation entityPositionInterpolation;
     public EntityAnimator entityAnimator;
     public Transform serverStateObject;
     
@@ -22,10 +23,10 @@ public class PlayerMovement :
     void Start()
     {
         if(cameraTransform == default) cameraTransform = Camera.main?.transform ?? transform;
-        if(entityInterpolation == default) entityInterpolation = GetComponent<EntityInterpolation>();
+        if(entityPositionInterpolation == default) entityPositionInterpolation = GetComponent<EntityPositionInterpolation>();
         if(!entityAnimator) entityAnimator = GetComponent<EntityAnimator>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
-        entityInterpolation.SetCanonicalPosition(transform.position);
+        entityPositionInterpolation.SetCanonicalPosition(transform.position);
         _yPosition = transform.position.y;
     }
 
@@ -75,6 +76,6 @@ public class PlayerMovement :
 
     public void SubscriptionUpdate(SharedPhysics.Entity update)
     {
-        entityInterpolation?.SetCanonicalPosition(update.Position.ToGamePosition(_yPosition));
+        entityPositionInterpolation?.SetCanonicalPosition(update.Position.ToGamePosition(_yPosition));
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class EntityInterpolation : MonoBehaviour
+public class EntityPositionInterpolation : MonoBehaviour
 {
     public float lerpDuration = 0.1f;
     

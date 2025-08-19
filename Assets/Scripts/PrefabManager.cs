@@ -87,6 +87,8 @@ public class PrefabManager : MonoBehaviour
         var entityController = Instantiate(_instance.entityPrefab);
         entityController.name = $"Entity:{entity.EntityId}";
         entityController.Spawn(entity.EntityId);
+        var entityRotationInterpolation = entityController.gameObject.AddComponent<EntityRotationInterpolation>();
+        entityRotationInterpolation.Init(GameManager.Config.UpdateEntityInterval);
         var serverEntityMovement = entityController.gameObject.AddComponent<ServerEntityMovement>();
         serverEntityMovement.Init(entity);
         return entityController;

@@ -11,6 +11,8 @@ public class EntityRotationInterpolation : MonoBehaviour
     public void Init(float lerpDuration)
     {
         _lerpDuration = lerpDuration;
+        _current = transform.rotation;
+        _previous = transform.rotation;
     }
 
     public void SetCanonicalRotation(Quaternion rotation)

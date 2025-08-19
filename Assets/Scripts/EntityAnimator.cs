@@ -33,7 +33,5 @@ public class EntityAnimator : MonoBehaviour
     void Start()
     {
         if(!animator) animator = GetComponent<Animator>();
-        animator.CrossFadeInFixedTime("RunForward", 0.1f);
-        animator.CrossFadeInFixedTime("Idle", 0.1f);
     }
 }

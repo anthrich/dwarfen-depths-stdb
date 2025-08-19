@@ -8,6 +8,7 @@ public class CameraMovement : MonoBehaviour
 {
     public bool lookEnabled;
     public float lookSensitivity = 0.2f;
+    private Vector2 _lastMousePosition;
     private PlayerInput _playerInput;
     private CinemachineCamera _camera;
     private InputAction _enableLookAction;
@@ -32,6 +33,7 @@ public class CameraMovement : MonoBehaviour
     private void LookEnabled(InputAction.CallbackContext obj)
     {
         lookEnabled = true;
+        _lastMousePosition = Mouse.current.position.ReadValue();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -40,6 +42,7 @@ public class CameraMovement : MonoBehaviour
     {
         lookEnabled = false;
         Cursor.lockState = CursorLockMode.None;
+        Mouse.current.WarpCursorPosition(_lastMousePosition);
         Cursor.visible = true;
     }
 

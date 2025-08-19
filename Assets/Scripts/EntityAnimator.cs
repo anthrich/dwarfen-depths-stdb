@@ -9,7 +9,7 @@ public class EntityAnimator : MonoBehaviour
     private static readonly int MovementSpeed = Animator.StringToHash("MovementSpeed");
     private static readonly int StrafeSpeed = Animator.StringToHash("StrafeSpeed");
     private static readonly int ForwardSpeed = Animator.StringToHash("ForwardSpeed");
-    private const float MovementDamping = 0.05f;
+    private const float MovementDamping = 0.03f;
     private Vector3 _direction;
     private float _currentStrafe = 0f;
     private float _currentForward = 0f;

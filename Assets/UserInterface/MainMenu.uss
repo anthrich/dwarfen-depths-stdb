@@ -10,7 +10,7 @@
 }
 
 .server-dropdown > .unity-base-field__input {
-    background-color: black;
+    background-color: rgba(255, 255, 255, 0.001);
     border-color: rgb(100, 100, 100);
     border-width: 1px;
     border-radius: 12px;
@@ -18,9 +18,17 @@
 }
 
 .unity-button {
-    background-color: black;
+    background-color: rgba(255, 255, 255, 0.001);
     border-color: rgb(100, 100, 100);
     border-width: 1px;
     border-radius: 12px;
     height: 48px;
+}
+
+.unity-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.unity-button:active {
+    background-color: rgba(255, 255, 255, 0.3);
 }

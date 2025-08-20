@@ -33,41 +33,54 @@ public class CameraMovement : MonoBehaviour
     {
         _enableLookAction.performed -= LookEnabled;
         _enableLookAction.canceled -= LookDisabled;
+        _enableFreeLookAction.performed -= FreeLookEnabled;
+        _enableFreeLookAction.canceled -= FreeLookDisabled;
     }
 
     private void LookEnabled(InputAction.CallbackContext obj)
     {
-        freeLookEnabled = false;
         lookEnabled = true;
-        _lastMousePosition = Mouse.current.position.ReadValue();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        EnableLook();
     }
     
     private void LookDisabled(InputAction.CallbackContext obj)
     {
+        if(!lookEnabled) return;
         lookEnabled = false;
-        Cursor.lockState = CursorLockMode.None;
-        Mouse.current.WarpCursorPosition(_lastMousePosition);
-        Cursor.visible = true;
+        DisableLook();
     }
     
     private void FreeLookEnabled(InputAction.CallbackContext obj)
     {
-        LookEnabled(obj);
         freeLookEnabled = true;
+        EnableLook();
     }
     
     private void FreeLookDisabled(InputAction.CallbackContext obj)
     {
+        if(!freeLookEnabled) return;
         freeLookEnabled = false;
-        LookDisabled(obj);
+        DisableLook();
+    }
+
+    private void EnableLook()
+    {
+        _lastMousePosition = Mouse.current.position.ReadValue();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void DisableLook()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Mouse.current.WarpCursorPosition(_lastMousePosition);
+        Cursor.visible = true;
     }
 
     [UsedImplicitly]
     private void OnLook(InputValue value)
     {
-        if(!lookEnabled) return;
+        if(!lookEnabled && !freeLookEnabled) return;
         var inputVector2 = value.Get<Vector2>();
         _orbitalFollow.HorizontalAxis.Value += inputVector2.x * lookSensitivity;
         _orbitalFollow.VerticalAxis.Value -= inputVector2.y * lookSensitivity;

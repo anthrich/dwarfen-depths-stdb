@@ -45,8 +45,12 @@ namespace SharedPhysics
             
             foreach (var entity in entities)
             {
-                var movementPerInterval = entity.Speed * deltaTime;
-                var targetMovement = entity.Direction.Normalized() * movementPerInterval;
+                var forwardDirection = Entity.GetForwardDirection(entity);
+                var normalizedDirection = entity.Direction.Normalized();
+                var isBackpedalling = Vector2.Dot(normalizedDirection, forwardDirection) < -0.01f;
+                var backpedalMultiplier = isBackpedalling ? 0.5f : 1f;
+                var movementPerInterval = entity.Speed * backpedalMultiplier * deltaTime;
+                var targetMovement = normalizedDirection * movementPerInterval;
                 var targetPosition = entity.Position + targetMovement;
                 var movementLine = new Line(entity.Position, targetPosition);
                 var nearbyLines = GetNearbyLines(movementLine, lines);
@@ -72,6 +76,13 @@ namespace SharedPhysics
             }
             
             return processed;
+        }
+
+        private static Vector2 GetForwardDirection(Entity entity)
+        {
+            var rotationRadians = entity.Rotation * (float)(Math.PI / 180.0);
+            var forwardDirection = new Vector2((float)Math.Sin(rotationRadians), (float)Math.Cos(rotationRadians));
+            return forwardDirection;
         }
     }
 }

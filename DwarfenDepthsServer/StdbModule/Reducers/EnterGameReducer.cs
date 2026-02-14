@@ -16,7 +16,8 @@ public static partial class Module
     private static void SpawnPlayerEntity(ReducerContext ctx, Player player)
     {
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
-        var spawnPos = MapData.DefaultSpawnPosition;
+        var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
+        var spawnPos = MapData.GetMap(config.MapName).DefaultSpawnPosition;
         var playerEntity = ctx.Db.Entity.Insert(new Entity
         {
             Position = new DbVector2(spawnPos.X, spawnPos.Y),

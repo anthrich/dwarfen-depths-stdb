@@ -122,7 +122,7 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Got config: {insertedValue}");
         Config = insertedValue;
-        Simulation.Instance.Init();
+        Simulation.Instance.Init(insertedValue.MapName);
     }
     
     private static void OnEntityInserted(EventContext context, Entity insertedValue)

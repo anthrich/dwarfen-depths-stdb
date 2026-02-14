@@ -25,6 +25,9 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.cs">
         <Link>MapData.cs</Link>
       </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapDefinition.cs">
+        <Link>MapDefinition.cs</Link>
+      </Compile>
     </ItemGroup>
 
 </Project>

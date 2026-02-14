@@ -225,6 +225,19 @@ public class SharedPhysicsEngineTests
     }
     
     [Fact]
+    public void GetMap_returns_valid_map_for_known_name()
+    {
+        var map = MapData.GetMap("Default");
+        Assert.NotEmpty(map.Lines);
+    }
+
+    [Fact]
+    public void GetMap_throws_for_unknown_name()
+    {
+        Assert.Throws<ArgumentException>(() => MapData.GetMap("NonexistentMap"));
+    }
+
+    [Fact]
     public void Simulating_does_not_clear_rotation()
     {
         // Arrange

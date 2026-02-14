@@ -21,20 +21,25 @@ namespace SpacetimeDB.Types
         public ulong RoomSize;
         [DataMember(Name = "UpdateEntityInterval")]
         public float UpdateEntityInterval;
+        [DataMember(Name = "MapName")]
+        public string MapName;
 
         public Config(
             uint Id,
             ulong RoomSize,
-            float UpdateEntityInterval
+            float UpdateEntityInterval,
+            string MapName
         )
         {
             this.Id = Id;
             this.RoomSize = RoomSize;
             this.UpdateEntityInterval = UpdateEntityInterval;
+            this.MapName = MapName;
         }
 
         public Config()
         {
+            this.MapName = "";
         }
     }
 }

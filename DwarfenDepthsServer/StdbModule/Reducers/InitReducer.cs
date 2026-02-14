@@ -7,9 +7,15 @@ public static partial class Module
     public static void Init(ReducerContext ctx)
     {
         Log.Info($"Initializing...");
-        var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config());
+        var config = ctx.Db.Config.Id.Find(0) ?? ctx.Db.Config.Insert(new Config
+        {
+            RoomSize = 10,
+            UpdateEntityInterval = 0.050f,
+            MapName = "Default"
+        });
         config.RoomSize = 10;
         config.UpdateEntityInterval = 0.050f;
+        config.MapName = "Default";
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;
@@ -19,12 +25,13 @@ public static partial class Module
         {
             ScheduledAt = new ScheduleAt.Interval(TimeSpan.FromSeconds(config.UpdateEntityInterval / 4))
         });
-        InsertRatmen(ctx, entityUpdate);
+        var map = MapData.GetMap(config.MapName);
+        InsertRatmen(ctx, entityUpdate, map);
     }
 
-    private static void InsertRatmen(ReducerContext ctx, EntityUpdate entityUpdate)
+    private static void InsertRatmen(ReducerContext ctx, EntityUpdate entityUpdate, MapDefinition map)
     {
-        var spawn = MapData.DefaultSpawnPosition;
+        var spawn = map.DefaultSpawnPosition;
         var offsets = new Vector2[] { new(10f, 0f), new(20f, 0f) };
         foreach (var offset in offsets)
         {

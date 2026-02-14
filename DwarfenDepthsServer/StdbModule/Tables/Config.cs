@@ -9,5 +9,6 @@ public static partial class Module
         public uint Id;
         public ulong RoomSize;
         public float UpdateEntityInterval;
+        public string MapName;
     }
 }

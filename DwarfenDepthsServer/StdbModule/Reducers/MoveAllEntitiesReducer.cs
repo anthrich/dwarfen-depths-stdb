@@ -25,7 +25,7 @@ public static partial class Module
                 .Select(grp => (grp.Key, grp.First()))
                 .ToDictionary();
 
-            var lines = ctx.Db.Line.Iter().Select(Line.ToPhysics).ToArray();
+            var lines = MapData.Lines;
             
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             var entities = ctx.Db.Entity.Iter().ToArray();

@@ -22,6 +22,9 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Vector2.cs">
         <Link>Vector2.cs</Link>
       </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.cs">
+        <Link>MapData.cs</Link>
+      </Compile>
     </ItemGroup>
 
 </Project>

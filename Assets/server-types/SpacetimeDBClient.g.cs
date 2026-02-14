@@ -26,8 +26,6 @@ namespace SpacetimeDB.Types
             AddTable(Config = new(conn));
             AddTable(Entity = new(conn));
             AddTable(EntityUpdate = new(conn));
-            AddTable(Line = new(conn));
-            AddTable(MapTile = new(conn));
             AddTable(Player = new(conn));
             AddTable(PlayerInput = new(conn));
             AddTable(MoveAllEntitiesTimer = new(conn));

@@ -42,11 +42,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     public void Init()
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
-    }
-
-    public void Register(Line line)
-    {
-        _lines.Add(line);
+        _lines = new List<Line>(MapData.Lines);
     }
 
     public void SetLocalPlayerEntity(Entity localPlayerEntity)

@@ -1,6 +1,5 @@
 using SpacetimeDB.Types;
 using UnityEngine;
-using Line = SharedPhysics.Line;
 using PlayerInput = UnityEngine.InputSystem.PlayerInput;
 
 public class PrefabManager : MonoBehaviour
@@ -9,50 +8,11 @@ public class PrefabManager : MonoBehaviour
     public LatencyChart latencyChart;
     public PlayerController playerPrefab;
     public EntityController entityPrefab;
-    public MeshFilter floorMeshPrefab;
-    public MeshFilter wallMeshPrefab;
-    public MeshFilter roofMeshPrefab;
-    public GameObject mapContainer;
     public Material targetCircleMaterial;
 
     private void Awake()
     {
         _instance = this;
-    }
-
-    public static void SpawnMapTile(MapTile tile)
-    {
-        MeshFilter floorMesh = Instantiate(_instance.floorMeshPrefab, _instance.mapContainer.transform);
-        MeshFilter roofMesh = Instantiate(_instance.roofMeshPrefab, _instance.mapContainer.transform);
-        ScaleMeshToMapTile(tile, floorMesh);
-        ScaleMeshToMapTile(tile, roofMesh);
-        floorMesh.transform.position = tile.Position.ToGamePosition(floorMesh.transform.position.y);
-        roofMesh.transform.position = tile.Position.ToGamePosition(roofMesh.transform.position.y);
-    }
-
-    private static void ScaleMeshToMapTile(MapTile tile, MeshFilter mesh)
-    {
-        var bounds = mesh.mesh.bounds;
-        var originalWidth = bounds.size.x;
-        var originalLength = bounds.size.z;
-        var scale = new Vector3(tile.Width / originalWidth, 1f, tile.Height / originalLength);
-        mesh.transform.localScale = scale;
-    }
-
-    public static void SpawnWall(Line line)
-    {
-        MeshFilter meshFilter = Instantiate(_instance.wallMeshPrefab, _instance.mapContainer.transform);
-        Bounds bounds = meshFilter.mesh.bounds;
-        float originalLength = bounds.size.x;
-        var diff = line.End - line.Start;
-        var length = diff.GetMagnitude();
-        Vector3 scale = new Vector3(length / originalLength, 1f, 1f);
-        meshFilter.transform.localScale = scale;
-        meshFilter.transform.position = (line.Start + diff * 0.5f)
-            .ToGamePosition(meshFilter.transform.position.y);
-        float angleInRadians = Mathf.Atan2(diff.Y, diff.X);
-        float angleInDegrees = angleInRadians * Mathf.Rad2Deg;
-        meshFilter.transform.rotation = Quaternion.Euler(90, angleInDegrees, 0);
     }
 
     public static PlayerController SpawnPlayer(Player player)
@@ -62,7 +22,7 @@ public class PrefabManager : MonoBehaviour
         playerController.Initialize(player);
         return playerController;
     }
-    
+
     public static EntityController SpawnPlayerEntity(Entity entity)
     {
         var entityController = Instantiate(_instance.entityPrefab);

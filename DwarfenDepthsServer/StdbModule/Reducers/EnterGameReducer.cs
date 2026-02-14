@@ -1,4 +1,5 @@
-﻿using SpacetimeDB;
+using SharedPhysics;
+using SpacetimeDB;
 
 public static partial class Module
 {
@@ -11,15 +12,15 @@ public static partial class Module
         ctx.Db.Player.Identity.Update(player);
         SpawnPlayerEntity(ctx, player);
     }
-    
+
     private static void SpawnPlayerEntity(ReducerContext ctx, Player player)
     {
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
-        var mapTile = ctx.Db.MapTile.Iter().First();
+        var spawnPos = MapData.DefaultSpawnPosition;
         var playerEntity = ctx.Db.Entity.Insert(new Entity
         {
-            Position = mapTile.Position,
-            Direction = new DbVector2(0,0),
+            Position = new DbVector2(spawnPos.X, spawnPos.Y),
+            Direction = new DbVector2(0, 0),
             SequenceId = entityUpdate.SequenceId,
             Speed = 7f
         });

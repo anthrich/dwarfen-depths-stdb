@@ -68,17 +68,13 @@ public class GameManager : MonoBehaviour
         conn.Db.Entity.OnDelete += OnEntityDeleted;
         conn.Db.Player.OnInsert += OnDbPlayerInserted;
         conn.Db.Player.OnUpdate += OnDbPlayerUpdated;
-        conn.Db.MapTile.OnInsert += OnMapTileInserted;
-        conn.Db.Line.OnInsert += LineOnOnInsert;
-        
+
         Conn.SubscriptionBuilder()
             .Subscribe(new []
                 {
                     "SELECT * FROM Player",
                     "SELECT * FROM Config",
                     "SELECT * FROM Entity",
-                    "SELECT * FROM MapTile",
-                    "SELECT * FROM Line",
                 }
             );
         
@@ -122,18 +118,6 @@ public class GameManager : MonoBehaviour
         if(IsConnected() && LocalPlayer) Conn.Reducers.UpdatePlayerInput(inputs);
     }
 
-    private void LineOnOnInsert(EventContext context, Line row)
-    {
-        var line = new SharedPhysics.Line(new Vector2(row.Start.X, row.Start.Y), new Vector2(row.End.X, row.End.Y));
-        Simulation.Instance.Register(line);
-        PrefabManager.SpawnWall(line);
-    }
-
-    private static void OnMapTileInserted(EventContext context, MapTile tile)
-    {
-        PrefabManager.SpawnMapTile(tile);
-    }
-    
     private static void OnConfigInserted(EventContext context, Config insertedValue)
     {
         Debug.Log($"Got config: {insertedValue}");

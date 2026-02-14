@@ -12,6 +12,7 @@ namespace SharedPhysics
         };
 
         private static readonly MapDefinition Default = new MapDefinition(
+            "Default",
             new Line[]
             {
                 new Line(new Vector2(105f, 95f), new Vector2(115f, 95f)),

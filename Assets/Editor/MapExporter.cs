@@ -161,6 +161,7 @@ public static class MapExporter
 
         code.AppendLine();
         code.AppendLine($"        private static readonly MapDefinition {mapName} = new MapDefinition(");
+        code.AppendLine($"            \"{mapName}\",");
         code.AppendLine("            new Line[]");
         code.AppendLine("            {");
         for (int i = 0; i < lines.Count; i++)

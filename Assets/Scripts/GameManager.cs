@@ -4,6 +4,7 @@ using SpacetimeDB;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Input = SpacetimeDB.Types.Input;
 using Vector2 = SharedPhysics.Vector2;
 
@@ -122,7 +123,8 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Got config: {insertedValue}");
         Config = insertedValue;
-        Simulation.Instance.Init(insertedValue.MapName);
+        var loadOp = SceneManager.LoadSceneAsync(insertedValue.MapName, LoadSceneMode.Additive);
+        loadOp.completed += _ => Simulation.Instance.Init(insertedValue.MapName);
     }
     
     private static void OnEntityInserted(EventContext context, Entity insertedValue)

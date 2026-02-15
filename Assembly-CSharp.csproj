@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\server-types\Reducers\EnterGame.g.cs" />
     <Compile Include="Assets\Scripts\SpawnPoint.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\LineGrid.cs" />
     <Compile Include="Assets\Scripts\CameraMovement.cs" />
     <Compile Include="Assets\Scripts\ServerEntityMovement.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Triangle.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="Assets\server-types\Tables\PlayerInput.g.cs" />
     <Compile Include="Assets\server-types\Reducers\Connect.g.cs" />
     <Compile Include="Assets\server-types\Types\Entity.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\MapData.Forest.cs" />
     <Compile Include="Assets\server-types\Tables\EntityUpdate.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Line.cs" />
     <Compile Include="Assets\Scripts\EntityPositionInterpolation.cs" />
@@ -89,6 +91,7 @@
     <Compile Include="Assets\Scripts\StringExtensions.cs" />
     <Compile Include="Assets\server-types\Types\Config.g.cs" />
     <Compile Include="Assets\Scripts\TerrainMesh.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\MapData.Default.cs" />
     <Compile Include="Assets\server-types\Types\DbVector2.g.cs" />
     <Compile Include="Assets\server-types\Reducers\MoveAllEntities.g.cs" />
     <Compile Include="Assets\server-types\Types\Faction.g.cs" />

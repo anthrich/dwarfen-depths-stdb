@@ -23,12 +23,13 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     private float _inputYRotation;
     private uint _targetId;
     private bool _jumpInput;
+    private const float MaxAccumulatedTime = 0.5f;
     private readonly Entity[] _simulationStateCache = new Entity[CacheSize];
     private Entity _localPlayerEntity;
 
     private Entity _serverEntityState;
     private readonly List<Entity> _entities = new();
-    private List<Line> _lines = new();
+    private LineGrid _lineGrid;
     private TerrainGrid _terrain;
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private ulong _lastCorrectedSequenceId;
@@ -46,7 +47,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
         var map = MapData.GetMap(mapName);
-        _lines = new List<Line>(map.Lines);
+        _lineGrid = new LineGrid(map.Lines);
         _terrain = map.Triangles.Length > 0 ? new TerrainGrid(map.Triangles) : null;
     }
 
@@ -100,8 +101,9 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
 
     private void Update()
     {
-        if(_currentSequenceId == 0) return;
+        if(_currentSequenceId == 0 || _lineGrid == null) return;
         _accumulatedDeltaTime += Time.deltaTime;
+        _accumulatedDeltaTime = Math.Min(_accumulatedDeltaTime, MaxAccumulatedTime);
 
         while (_accumulatedDeltaTime >= _serverUpdateInterval)
         {
@@ -136,7 +138,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 _serverUpdateInterval,
                 _currentSequenceId,
                 new[] { _localPlayerEntity },
-                _lines.ToArray(),
+                _lineGrid,
                 _terrain
             );
 
@@ -189,7 +191,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                     new [] {
                         localPlayerEntity
                     },
-                    _lines.ToArray(),
+                    _lineGrid,
                     _terrain
                 );
                 localPlayerEntity = result[0];

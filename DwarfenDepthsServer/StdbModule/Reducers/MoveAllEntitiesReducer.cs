@@ -4,6 +4,7 @@ using SpacetimeDB;
 public static partial class Module
 {
     private static TerrainGrid? _terrainGrid;
+    private static LineGrid? _lineGrid;
 
     [Reducer]
     public static void MoveAllEntities(ReducerContext ctx, MoveAllEntitiesTimer timer)
@@ -22,6 +23,7 @@ public static partial class Module
 
         var map = MapData.GetMap(config.MapName);
         _terrainGrid ??= map.Triangles.Length > 0 ? new TerrainGrid(map.Triangles) : null;
+        _lineGrid ??= new LineGrid(map.Lines);
 
         while (entityUpdate.DeltaTime >= config.UpdateEntityInterval)
         {
@@ -29,8 +31,6 @@ public static partial class Module
                 .GroupBy(pi => pi.EntityId)
                 .Select(grp => (grp.Key, grp.First()))
                 .ToDictionary();
-
-            var lines = map.Lines;
 
             entityUpdate.DeltaTime -= config.UpdateEntityInterval;
             var entities = ctx.Db.Entity.Iter().ToArray();
@@ -44,7 +44,7 @@ public static partial class Module
                     playerInputs,
                     entityUpdate.SequenceId,
                     config,
-                    lines,
+                    _lineGrid,
                     _terrainGrid
                 );
                 ctx.Db.Entity.EntityId.Update(updateEntity);
@@ -63,7 +63,7 @@ public static partial class Module
         Dictionary<uint, PlayerInput> playerInputs,
         ulong sequenceId,
         Config config,
-        SharedPhysics.Line[] lines,
+        LineGrid lineGrid,
         TerrainGrid? terrain)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
@@ -82,7 +82,7 @@ public static partial class Module
             config.UpdateEntityInterval,
             sequenceId,
             [physicsEntity],
-            lines,
+            lineGrid,
             terrain
         );
 

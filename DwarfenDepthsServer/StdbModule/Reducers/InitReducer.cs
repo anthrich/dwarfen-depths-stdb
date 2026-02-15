@@ -11,11 +11,11 @@ public static partial class Module
         {
             RoomSize = 10,
             UpdateEntityInterval = 0.050f,
-            MapName = "Default"
+            MapName = "Forest"
         });
         config.RoomSize = 10;
         config.UpdateEntityInterval = 0.050f;
-        config.MapName = "Default";
+        config.MapName = "Forest";
         ctx.Db.Config.Id.Update(config);
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? ctx.Db.EntityUpdate.Insert(new EntityUpdate());
         entityUpdate.LastTickedAt = ctx.Timestamp;

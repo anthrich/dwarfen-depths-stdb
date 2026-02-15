@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -25,6 +25,9 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.cs">
         <Link>MapData.cs</Link>
       </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.*.cs">
+        <Link>%(Filename)%(Extension)</Link>
+      </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapDefinition.cs">
         <Link>MapDefinition.cs</Link>
       </Compile>
@@ -36,6 +39,9 @@
       </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\TerrainGrid.cs">
         <Link>TerrainGrid.cs</Link>
+      </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\LineGrid.cs">
+        <Link>LineGrid.cs</Link>
       </Compile>
     </ItemGroup>
 

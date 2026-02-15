@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SharedPhysics
 {
     public static class Engine
     {
+        [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
         public const float Gravity = -19.62f;
         public const float JumpImpulse = 8f;
         public const float MaxSlopeAngle = 45f;
@@ -77,14 +79,21 @@ namespace SharedPhysics
         public static Entity[] Simulate(
             float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines)
         {
-            return Simulate(deltaTime, sequenceId, entities, lines, null);
+            return Simulate(deltaTime, sequenceId, entities, new LineGrid(lines), null);
         }
 
         public static Entity[] Simulate(
             float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines, TerrainGrid? terrain)
         {
+            return Simulate(deltaTime, sequenceId, entities, new LineGrid(lines), terrain);
+        }
+
+        public static Entity[] Simulate(
+            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, TerrainGrid? terrain)
+        {
             var processed = new Entity[entities.Length];
             var i = 0;
+            _nearbyLinesBuffer ??= new List<Line>();
 
             foreach (var entity in entities)
             {
@@ -117,9 +126,9 @@ namespace SharedPhysics
                 var currentPositionXZ = entity.Position.ToXZ();
                 var targetPositionXZ = currentPositionXZ + targetMovement;
                 var movementLine = new Line(currentPositionXZ, targetPositionXZ);
-                var nearbyLines = GetNearbyLines(movementLine, lines);
+                lineGrid.GetNearbyLines(BoundingBox.FromLine(movementLine), _nearbyLinesBuffer);
 
-                foreach (var line in nearbyLines)
+                foreach (var line in _nearbyLinesBuffer)
                 {
                     var intersection = GetIntersection(movementLine, line);
                     if (!intersection.HasValue) continue;

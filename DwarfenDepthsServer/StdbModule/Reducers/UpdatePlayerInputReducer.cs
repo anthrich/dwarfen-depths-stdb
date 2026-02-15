@@ -1,4 +1,4 @@
-﻿using SpacetimeDB;
+using SpacetimeDB;
 
 public static partial class Module
 {
@@ -16,6 +16,7 @@ public static partial class Module
                 SequenceId = input.SequenceId,
                 TargetEntityId = input.TargetEntityId,
                 Rotation = input.Rotation,
+                Jump = input.Jump,
             };
             ctx.Db.PlayerInput.Insert(playerInput);
         }

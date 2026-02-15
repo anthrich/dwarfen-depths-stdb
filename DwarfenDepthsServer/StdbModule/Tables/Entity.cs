@@ -1,4 +1,4 @@
-﻿using SpacetimeDB;
+using SpacetimeDB;
 
 public static partial class Module
 {
@@ -8,23 +8,27 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public uint EntityId;
         public float Speed;
-        public DbVector2 Position;
+        public DbVector3 Position;
         public DbVector2 Direction;
         public float Rotation;
         public ulong SequenceId;
         public Faction Allegiance;
         public uint TargetEntityId;
+        public float VerticalVelocity;
+        public bool IsGrounded;
 
         public static SharedPhysics.Entity ToPhysics(Entity entity)
         {
             return new SharedPhysics.Entity
             {
                 Id = entity.EntityId,
-                Position = DbVector2.ToPhysics(entity.Position),
+                Position = DbVector3.ToPhysics(entity.Position),
                 Direction = DbVector2.ToPhysics(entity.Direction),
                 Speed = entity.Speed,
                 SequenceId = entity.SequenceId,
                 Rotation = entity.Rotation,
+                VerticalVelocity = entity.VerticalVelocity,
+                IsGrounded = entity.IsGrounded,
             };
         }
 
@@ -33,11 +37,13 @@ public static partial class Module
             return new Entity
             {
                 EntityId = entity.Id,
-                Position = DbVector2.ToDb(entity.Position),
+                Position = DbVector3.ToDb(entity.Position),
                 Direction = DbVector2.ToDb(entity.Direction),
                 Speed = entity.Speed,
                 SequenceId = entity.SequenceId,
                 Rotation = entity.Rotation,
+                VerticalVelocity = entity.VerticalVelocity,
+                IsGrounded = entity.IsGrounded,
             };
         }
     }

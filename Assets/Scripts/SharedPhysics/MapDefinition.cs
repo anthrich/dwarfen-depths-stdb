@@ -4,12 +4,14 @@ namespace SharedPhysics
     {
         public readonly string Name;
         public readonly Line[] Lines;
-        public readonly Vector2 DefaultSpawnPosition;
+        public readonly Triangle[] Triangles;
+        public readonly Vector3 DefaultSpawnPosition;
 
-        public MapDefinition(string name, Line[] lines, Vector2 defaultSpawnPosition)
+        public MapDefinition(string name, Line[] lines, Triangle[] triangles, Vector3 defaultSpawnPosition)
         {
             Name = name;
             Lines = lines;
+            Triangles = triangles;
             DefaultSpawnPosition = defaultSpawnPosition;
         }
     }

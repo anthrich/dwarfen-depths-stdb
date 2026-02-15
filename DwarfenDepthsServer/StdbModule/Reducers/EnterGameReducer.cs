@@ -20,10 +20,12 @@ public static partial class Module
         var spawnPos = MapData.GetMap(config.MapName).DefaultSpawnPosition;
         var playerEntity = ctx.Db.Entity.Insert(new Entity
         {
-            Position = new DbVector2(spawnPos.X, spawnPos.Y),
+            Position = new DbVector3(spawnPos.X, spawnPos.Y, spawnPos.Z),
             Direction = new DbVector2(0, 0),
             SequenceId = entityUpdate.SequenceId,
-            Speed = 7f
+            Speed = 7f,
+            IsGrounded = true,
+            VerticalVelocity = 0,
         });
         player.EntityId = playerEntity.EntityId;
         ctx.Db.Player.Identity.Update(player);

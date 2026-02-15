@@ -32,17 +32,20 @@ public static partial class Module
     private static void InsertRatmen(ReducerContext ctx, EntityUpdate entityUpdate, MapDefinition map)
     {
         var spawn = map.DefaultSpawnPosition;
+        var spawnXZ = spawn.ToXZ();
         var offsets = new Vector2[] { new(10f, 0f), new(20f, 0f) };
         foreach (var offset in offsets)
         {
-            var pos = spawn + offset;
+            var pos = spawnXZ + offset;
             ctx.Db.Entity.Insert(new Entity()
             {
-                Position = new DbVector2(pos.X, pos.Y),
+                Position = new DbVector3(pos.X, spawn.Y, pos.Y),
                 Direction = new DbVector2(0, 0),
                 SequenceId = entityUpdate.SequenceId,
                 Speed = 7f,
-                Allegiance = Faction.Ratmen
+                Allegiance = Faction.Ratmen,
+                IsGrounded = true,
+                VerticalVelocity = 0,
             });
         }
     }

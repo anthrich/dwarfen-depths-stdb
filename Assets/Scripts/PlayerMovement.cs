@@ -15,10 +15,9 @@ public class PlayerMovement :
     [FormerlySerializedAs("entityInterpolation")] public EntityPositionInterpolation entityPositionInterpolation;
     public EntityAnimator entityAnimator;
     public Transform serverStateObject;
-    
+
     private Vector2 _movementInput = Vector2.zero;
     private Vector2 _movement = Vector2.zero;
-    private float _yPosition;
 
     void Start()
     {
@@ -27,19 +26,18 @@ public class PlayerMovement :
         if(!entityAnimator) entityAnimator = GetComponent<EntityAnimator>();
         if (serverStateObject == default) serverStateObject = transform.GetChild(0);
         entityPositionInterpolation.SetCanonicalPosition(transform.position);
-        _yPosition = transform.position.y;
     }
 
     public void OnEntitySpawned(Entity newServerEntityState)
     {
         Debug.Log($"Entity spawned: {newServerEntityState}");
     }
-    
+
     [UsedImplicitly]
     public void OnEntityUpdated(Entity newServerEntityState)
     {
         if(!serverStateObject) return;
-        serverStateObject.transform.position = newServerEntityState.Position.ToGamePosition(_yPosition);
+        serverStateObject.transform.position = newServerEntityState.Position.ToGamePosition();
     }
 
     [UsedImplicitly]
@@ -48,6 +46,12 @@ public class PlayerMovement :
         var newInput = value.Get<Vector2>();
         _movementInput = newInput;
         UpdateMovement();
+    }
+
+    [UsedImplicitly]
+    private void OnJump(InputValue value)
+    {
+        Simulation.Instance.SetJumpInput(true);
     }
 
     [UsedImplicitly]
@@ -61,7 +65,7 @@ public class PlayerMovement :
 
     private void UpdateMovement()
     {
-        var transformedMovement = transform.TransformDirection(_movementInput.ToGamePosition(_yPosition));
+        var transformedMovement = transform.TransformDirection(new Vector3(_movementInput.x, 0, _movementInput.y));
         transformedMovement.y = 0;
         transformedMovement = transformedMovement.normalized;
         _movement =  new Vector2(transformedMovement.x, transformedMovement.z);
@@ -76,6 +80,6 @@ public class PlayerMovement :
 
     public void SubscriptionUpdate(SharedPhysics.Entity update)
     {
-        entityPositionInterpolation?.SetCanonicalPosition(update.Position.ToGamePosition(_yPosition));
+        entityPositionInterpolation?.SetCanonicalPosition(update.Position.ToGamePosition());
     }
 }

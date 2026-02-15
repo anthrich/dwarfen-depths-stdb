@@ -1,4 +1,4 @@
-﻿using SpacetimeDB.Types;
+using SpacetimeDB.Types;
 using UnityEngine;
 
 public static class Vector2Extensions
@@ -12,27 +12,32 @@ public static class Vector2Extensions
     {
         return new SharedPhysics.Vector2(vec.x, vec.z);
     }
-    
+
     public static SharedPhysics.Vector2 ToSharedPhysicsV2(this Vector2 vec)
     {
         return new SharedPhysics.Vector2(vec.x, vec.y);
     }
 
-    public static Vector3 ToGamePosition(this Vector2 vec, float yPos)
+    public static SharedPhysics.Vector3 ToSharedPhysicsV3(this Vector3 vec)
     {
-        return new Vector3(vec.x, yPos, vec.y);
+        return new SharedPhysics.Vector3(vec.x, vec.y, vec.z);
     }
-    
-    public static Vector3 ToGamePosition(this DbVector2 vec, float yPos)
+
+    public static Vector3 ToGamePosition(this SharedPhysics.Vector3 vec)
     {
-        return new Vector3(vec.X, yPos, vec.Y);
+        return new Vector3(vec.X, vec.Y, vec.Z);
     }
-    
-    public static Vector3 ToGamePosition(this SharedPhysics.Vector2 vec, float yPos)
+
+    public static Vector3 ToGamePosition(this DbVector3 vec)
     {
-        return new Vector3(vec.X, yPos, vec.Y);
+        return new Vector3(vec.X, vec.Y, vec.Z);
     }
-    
+
+    public static Vector3 ToGameDirection(this DbVector2 vec)
+    {
+        return new Vector3(vec.X, 0, vec.Y);
+    }
+
     public static bool ApproximatesTo(this Vector2 vec, Vector2 target, float precision = 0.1f)
     {
         return Mathf.Abs(vec.x - target.x) < precision && Mathf.Abs(vec.y - target.y) < precision;

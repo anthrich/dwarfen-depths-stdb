@@ -1,4 +1,4 @@
-﻿using SpacetimeDB;
+using SpacetimeDB;
 using Index = SpacetimeDB.Index;
 
 public static partial class Module
@@ -13,5 +13,6 @@ public static partial class Module
         public uint TargetEntityId;
         public DbVector2 Direction;
         public float Rotation;
+        public bool Jump;
     }
 }

@@ -28,6 +28,15 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapDefinition.cs">
         <Link>MapDefinition.cs</Link>
       </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\Vector3.cs">
+        <Link>Vector3.cs</Link>
+      </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\Triangle.cs">
+        <Link>Triangle.cs</Link>
+      </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\TerrainGrid.cs">
+        <Link>TerrainGrid.cs</Link>
+      </Compile>
     </ItemGroup>
 
 </Project>

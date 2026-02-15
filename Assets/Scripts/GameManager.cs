@@ -7,19 +7,20 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Input = SpacetimeDB.Types.Input;
 using Vector2 = SharedPhysics.Vector2;
+using Vector3 = SharedPhysics.Vector3;
 
 [RequireComponent(typeof(NetworkTime))]
 public class GameManager : MonoBehaviour
 {
     public CinemachineCamera cinemachineCamera;
     public NetworkTime networkTime;
-    
+
     public static readonly Dictionary<string, string> ServerChoices = new()
     {
         {"Local", "http://127.0.0.1:3000"},
         {"Maincloud", "https://maincloud.spacetimedb.com"}
     };
-    
+
     const string ModuleName = "dwarfen-depths";
 
     public static event Action OnConnected;
@@ -49,12 +50,12 @@ public class GameManager : MonoBehaviour
             .OnDisconnect(HandleDisconnect)
             .WithUri(ServerChoices[server])
             .WithModuleName(ModuleName);
-        
+
         if (AuthToken.Token != "")
         {
             builder = builder.WithToken(AuthToken.Token);
         }
-        
+
         Conn = builder.Build();
     }
 
@@ -78,7 +79,7 @@ public class GameManager : MonoBehaviour
                     "SELECT * FROM Entity",
                 }
             );
-        
+
         OnConnected?.Invoke();
     }
 
@@ -126,29 +127,31 @@ public class GameManager : MonoBehaviour
         var loadOp = SceneManager.LoadSceneAsync(insertedValue.MapName, LoadSceneMode.Additive);
         loadOp.completed += _ => Simulation.Instance.Init(insertedValue.MapName);
     }
-    
+
     private static void OnEntityInserted(EventContext context, Entity insertedValue)
     {
         var entityController = PrefabManager.SpawnEntity(insertedValue);
         Entities.Add(insertedValue.EntityId, entityController);
     }
-    
+
     private static void OnEntityUpdated(EventContext context, Entity oldEntity, Entity newEntity)
     {
         if (!Entities.TryGetValue(newEntity.EntityId, out var entityController))
         {
             return;
         }
-        
+
         Simulation.Instance.OnEntityUpdated(new SharedPhysics.Entity()
         {
-            Position = new Vector2(newEntity.Position.X, newEntity.Position.Y),
+            Position = new Vector3(newEntity.Position.X, newEntity.Position.Y, newEntity.Position.Z),
             Direction = new Vector2(newEntity.Direction.X, newEntity.Direction.Y),
             SequenceId = newEntity.SequenceId,
             Id = newEntity.EntityId,
-            Speed = newEntity.Speed
+            Speed = newEntity.Speed,
+            VerticalVelocity = newEntity.VerticalVelocity,
+            IsGrounded = newEntity.IsGrounded,
         });
-        
+
         entityController?.SendMessage("OnEntityUpdated", newEntity);
     }
 
@@ -159,7 +162,7 @@ public class GameManager : MonoBehaviour
             entityController.OnDelete(context);
         }
     }
-    
+
     private void OnDbPlayerInserted(EventContext context, Player insertedPlayer)
     {
         if (insertedPlayer?.Identity != LocalIdentity) return;
@@ -178,17 +181,19 @@ public class GameManager : MonoBehaviour
         {
             Destroy(existingController.gameObject);
         }
-        
+
         var dbEntity = Conn.Db.Entity.EntityId.Find(LocalPlayer.EntityId);
         var entityController = PrefabManager.SpawnPlayerEntity(dbEntity);
         Instance.cinemachineCamera.Target.TrackingTarget = entityController.transform;
         Simulation.Instance.SetLocalPlayerEntity(new SharedPhysics.Entity()
         {
-            Position = new Vector2(dbEntity.Position.X, dbEntity.Position.Y),
+            Position = new Vector3(dbEntity.Position.X, dbEntity.Position.Y, dbEntity.Position.Z),
             Direction = new Vector2(dbEntity.Direction.X, dbEntity.Direction.Y),
             SequenceId = dbEntity.SequenceId,
             Id = dbEntity.EntityId,
-            Speed = dbEntity.Speed
+            Speed = dbEntity.Speed,
+            VerticalVelocity = dbEntity.VerticalVelocity,
+            IsGrounded = dbEntity.IsGrounded,
         });
         Entities.Add(LocalPlayer.EntityId, entityController);
         Conn.Reducers.OnEnterGame -= OnGameEntered;

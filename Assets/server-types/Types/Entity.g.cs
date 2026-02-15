@@ -20,7 +20,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "Speed")]
         public float Speed;
         [DataMember(Name = "Position")]
-        public DbVector2 Position;
+        public DbVector3 Position;
         [DataMember(Name = "Direction")]
         public DbVector2 Direction;
         [DataMember(Name = "Rotation")]
@@ -31,16 +31,22 @@ namespace SpacetimeDB.Types
         public Faction Allegiance;
         [DataMember(Name = "TargetEntityId")]
         public uint TargetEntityId;
+        [DataMember(Name = "VerticalVelocity")]
+        public float VerticalVelocity;
+        [DataMember(Name = "IsGrounded")]
+        public bool IsGrounded;
 
         public Entity(
             uint EntityId,
             float Speed,
-            DbVector2 Position,
+            DbVector3 Position,
             DbVector2 Direction,
             float Rotation,
             ulong SequenceId,
             Faction Allegiance,
-            uint TargetEntityId
+            uint TargetEntityId,
+            float VerticalVelocity,
+            bool IsGrounded
         )
         {
             this.EntityId = EntityId;
@@ -51,6 +57,8 @@ namespace SpacetimeDB.Types
             this.SequenceId = SequenceId;
             this.Allegiance = Allegiance;
             this.TargetEntityId = TargetEntityId;
+            this.VerticalVelocity = VerticalVelocity;
+            this.IsGrounded = IsGrounded;
         }
 
         public Entity()

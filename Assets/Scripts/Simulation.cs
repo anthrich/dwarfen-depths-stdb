@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using SharedPhysics;
 using UnityEngine;
 using Entity = SharedPhysics.Entity;
 using Input = SpacetimeDB.Types.Input;
 using Vector2 = SharedPhysics.Vector2;
+using Vector3 = SharedPhysics.Vector3;
 
 public class Simulation : MonoBehaviour, IPublisher<Entity>
 {
@@ -12,26 +13,28 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     private float _accumulatedDeltaTime;
     private ulong _currentSequenceId;
     private const int CacheSize = 1024;
-    
+
     private const string ServerUpdateRateKey = "server-update-rate";
     private const string ClientUpdateRateKey = "client-update-rate";
     private DateTimeOffset _lastServerUpdateAt;
     private DateTimeOffset _lastClientUpdateAt;
-    
+
     private UnityEngine.Vector2 _inputDirection;
     private float _inputYRotation;
     private uint _targetId;
+    private bool _jumpInput;
     private readonly Entity[] _simulationStateCache = new Entity[CacheSize];
     private Entity _localPlayerEntity;
-    
+
     private Entity _serverEntityState;
     private readonly List<Entity> _entities = new();
     private List<Line> _lines = new();
+    private TerrainGrid _terrain;
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private ulong _lastCorrectedSequenceId;
     private List<ISubscriber<Entity>> _subscribers = new();
     private readonly UpdateRateCache _updateRateCache = new(30, new []{ ServerUpdateRateKey, ClientUpdateRateKey });
-    
+
     public static Simulation Instance { get; private set; }
 
     public void Start()
@@ -42,7 +45,9 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     public void Init(string mapName)
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
-        _lines = new List<Line>(MapData.GetMap(mapName).Lines);
+        var map = MapData.GetMap(mapName);
+        _lines = new List<Line>(map.Lines);
+        _terrain = map.Triangles.Length > 0 ? new TerrainGrid(map.Triangles) : null;
     }
 
     public void SetLocalPlayerEntity(Entity localPlayerEntity)
@@ -67,7 +72,12 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     {
         _targetId = target.entityId;
     }
-    
+
+    public void SetJumpInput(bool jump)
+    {
+        _jumpInput = jump;
+    }
+
     public void OnEntityUpdated(Entity newServerEntityState)
     {
         if(newServerEntityState.Id != _localPlayerEntity.Id) return;
@@ -76,23 +86,23 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
         {
             Debug.Log($"Sequence issue: (Old){_serverEntityState.SequenceId} : (New){newServerEntityState.SequenceId}");
         }
-        
+
         var diff = DateTimeOffset.Now - _lastServerUpdateAt;
         _lastServerUpdateAt = DateTimeOffset.Now;
         _updateRateCache.AddToStream(
             ServerUpdateRateKey,
             new UpdateRateCache.Entry { Rate = diff.TotalMilliseconds, SequenceId = newServerEntityState.SequenceId }
         );
-        
+
         _serverEntityState = newServerEntityState;
         _inputsAheadOfSimulation.RemoveAll(i => i.SequenceId <= _serverEntityState.SequenceId);
     }
-    
+
     private void Update()
     {
         if(_currentSequenceId == 0) return;
         _accumulatedDeltaTime += Time.deltaTime;
-        
+
         while (_accumulatedDeltaTime >= _serverUpdateInterval)
         {
             _updateRateCache.AddToStream(
@@ -110,79 +120,89 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 Direction = _inputDirection,
                 SequenceId = _currentSequenceId,
                 TargetEntityId = _targetId,
-                YRotation = _inputYRotation
+                YRotation = _inputYRotation,
+                Jump = _jumpInput
             };
             _localPlayerEntity.Direction = _inputDirection.ToSharedPhysicsV2();
             _localPlayerEntity.Rotation = _inputYRotation;
-            
+
+            if (_jumpInput && _localPlayerEntity.IsGrounded)
+            {
+                _localPlayerEntity.VerticalVelocity = Engine.JumpImpulse;
+                _localPlayerEntity.IsGrounded = false;
+            }
+
             var result = Engine.Simulate(
                 _serverUpdateInterval,
                 _currentSequenceId,
                 new[] { _localPlayerEntity },
-                _lines.ToArray()
+                _lines.ToArray(),
+                _terrain
             );
-            
+
             _localPlayerEntity = result[0];
             var cacheIndex = Convert.ToInt32(_currentSequenceId % CacheSize);
             _simulationStateCache[cacheIndex] = _localPlayerEntity;
-            
+
             _entities.Clear();
             _entities.AddRange(result);
             SendInput(input);
             _currentSequenceId++;
+            _jumpInput = false;
         }
-        
+
         _localPlayerEntity = Reconcile(_localPlayerEntity);
-        
+
         foreach (var subscriber in _subscribers)
         {
             subscriber.SubscriptionUpdate(_localPlayerEntity);
         }
     }
-    
+
     private Entity Reconcile(Entity localPlayerEntity)
     {
         if(_serverEntityState.SequenceId <= _lastCorrectedSequenceId) return localPlayerEntity;
         var cacheIndex = Convert.ToInt32(_serverEntityState.SequenceId % CacheSize);
         var cachedSimulationState = _simulationStateCache[cacheIndex];
         var position = _serverEntityState.Position;
-        var posDif = Vector2.Distance(cachedSimulationState.Position, position);
-        
+        var posDif = Vector3.Distance(cachedSimulationState.Position, position);
+
         if (posDif > 0.001f)
         {
             localPlayerEntity = _serverEntityState;
             var rewindTick = _serverEntityState.SequenceId + 1;
-            
+
             while (rewindTick < _currentSequenceId)
             {
                 var rewindCacheIndex = Convert.ToInt32(rewindTick % CacheSize);
                 var rewoundSimulation = _simulationStateCache[rewindCacheIndex];
-                
+
                 if (rewoundSimulation.SequenceId != rewindTick)
                 {
                     ++rewindTick;
                     continue;
                 }
-                
+
                 var result = Engine.Simulate(
                     _serverUpdateInterval,
                     rewindTick,
                     new [] {
                         localPlayerEntity
                     },
-                    _lines.ToArray()
+                    _lines.ToArray(),
+                    _terrain
                 );
                 localPlayerEntity = result[0];
                 _simulationStateCache[rewindCacheIndex] = localPlayerEntity;
                 ++rewindTick;
             }
         }
-        
+
         _lastCorrectedSequenceId = _serverEntityState.SequenceId;
-        
+
         return localPlayerEntity;
     }
-    
+
     private void SendInput(InputState inputState)
     {
         _inputsAheadOfSimulation.Add(
@@ -190,7 +210,8 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 inputState.SequenceId,
                 inputState.Direction.ToDbVector2(),
                 inputState.YRotation,
-                inputState.TargetEntityId
+                inputState.TargetEntityId,
+                inputState.Jump
             )
         );
         if(_inputsAheadOfSimulation.Count > 12) _inputsAheadOfSimulation.RemoveAt(0);
@@ -206,7 +227,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     {
         _subscribers.Remove(subscriber);
     }
-    
+
     public void Subscribe(ISubscriber<UpdateRateCache> subscriber)
     {
         _updateRateCache.Subscribe(subscriber);

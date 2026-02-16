@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SharedPhysics
 {
-    public class TerrainGrid
+    public class TerrainGrid : ITerrain
     {
         private readonly Triangle[] _triangles;
         private readonly float _cellSize;

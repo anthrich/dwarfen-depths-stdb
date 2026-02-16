@@ -30,7 +30,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
     private Entity _serverEntityState;
     private readonly List<Entity> _entities = new();
     private LineGrid _lineGrid;
-    private TerrainGrid _terrain;
+    private ITerrain _terrain;
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private ulong _lastCorrectedSequenceId;
     private List<ISubscriber<Entity>> _subscribers = new();
@@ -48,7 +48,22 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
         var map = MapData.GetMap(mapName);
         _lineGrid = new LineGrid(map.Lines);
-        _terrain = map.Triangles.Length > 0 ? new TerrainGrid(map.Triangles) : null;
+
+        if (map.HasHeightmap)
+        {
+            _terrain = new Heightmap(
+                map.HeightmapData, map.HeightmapResolution,
+                map.HeightmapOriginX, map.HeightmapOriginZ,
+                map.HeightmapSizeX, map.HeightmapSizeZ);
+        }
+        else if (map.Triangles.Length > 0)
+        {
+            _terrain = new TerrainGrid(map.Triangles);
+        }
+        else
+        {
+            _terrain = null;
+        }
     }
 
     public void SetLocalPlayerEntity(Entity localPlayerEntity)

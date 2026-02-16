@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System.Collections.Generic;
@@ -11,7 +10,6 @@ using System.Text;
 public static class MapExporter
 {
     private const float EdgeEpsilon = 0.01f;
-    private const float MaxSlopeAngle = 45f;
     private static readonly string OutputDir = Path.Combine(Application.dataPath, "Scripts", "SharedPhysics");
 
     [MenuItem("Tools/Export Map Data")]
@@ -33,56 +31,46 @@ public static class MapExporter
 
         var allEdges = new List<Edge2D>();
         var allTriangles = new List<Triangle3D>();
+        HeightmapExportData? heightmapData = null;
 
         foreach (var terrainMesh in terrainMeshes)
         {
-            Mesh mesh;
-            bool isGeneratedMesh = false;
-
             var meshFilter = terrainMesh.GetComponent<MeshFilter>();
             var unityTerrain = terrainMesh.GetComponent<Terrain>();
 
             if (meshFilter != null && meshFilter.sharedMesh != null)
             {
-                mesh = meshFilter.sharedMesh;
+                // MeshFilter path: extract triangles and boundary edges from mesh
+                var mesh = meshFilter.sharedMesh;
+                var boundaryEdges = ExtractBoundaryEdges(mesh, terrainMesh.transform);
+                allEdges.AddRange(boundaryEdges);
+
+                var triangles = ExtractTriangles(mesh, terrainMesh.transform);
+                allTriangles.AddRange(triangles);
             }
             else if (unityTerrain != null && unityTerrain.terrainData != null)
             {
-                mesh = TerrainToMesh(unityTerrain, terrainMesh.resolution);
-                isGeneratedMesh = true;
+                // Terrain path: extract heightmap data and boundary edges
+                heightmapData = ExtractHeightmap(unityTerrain, terrainMesh.resolution);
+                var boundaryEdges = ExtractHeightmapBoundaryEdges(heightmapData.Value);
+                allEdges.AddRange(boundaryEdges);
             }
             else
             {
                 Debug.LogWarning($"TerrainMesh on '{terrainMesh.name}' has no MeshFilter or Terrain component. Skipping.");
-                continue;
-            }
-
-            var boundaryEdges = ExtractBoundaryEdges(mesh, terrainMesh.transform);
-            allEdges.AddRange(boundaryEdges);
-
-            var triangles = ExtractTriangles(mesh, terrainMesh.transform);
-            allTriangles.AddRange(triangles);
-
-            var slopeEdges = ExtractSlopeTransitionEdges(mesh, terrainMesh.transform, MaxSlopeAngle);
-            allEdges.AddRange(slopeEdges);
-
-            if (isGeneratedMesh)
-            {
-                Object.DestroyImmediate(mesh);
             }
         }
 
         var deduplicatedEdges = DeduplicateSharedEdges(allEdges);
         var deduplicatedTriangles = DeduplicateSharedTriangles(allTriangles);
         Debug.Log($"Extracted {allEdges.Count} boundary edges, {deduplicatedEdges.Count} after deduplication.");
-        Debug.Log($"Extracted {allTriangles.Count} triangles, {deduplicatedTriangles.Count} after deduplication.");
 
         var spawnPos = spawnPoints[0].transform.position;
         var mapName = EditorSceneManager.GetActiveScene().name;
 
         // Write per-map file
         var mapFilePath = Path.Combine(OutputDir, $"MapData.{mapName}.cs");
-        var mapCode = GenerateMapFile(mapName, deduplicatedEdges, deduplicatedTriangles, spawnPos);
+        var mapCode = GenerateMapFile(mapName, deduplicatedEdges, deduplicatedTriangles, spawnPos, heightmapData);
         File.WriteAllText(mapFilePath, mapCode);
 
         // Regenerate index from all existing per-map files
@@ -93,11 +81,10 @@ public static class MapExporter
 
         AssetDatabase.Refresh();
 
-        EditorUtility.DisplayDialog(
-            "Export Complete",
-            $"Exported map '{mapName}' ({deduplicatedEdges.Count} collision lines, {deduplicatedTriangles.Count} triangles).\n{allMapNames.Count} total map(s) registered.",
-            "OK"
-        );
+        var statsMessage = heightmapData.HasValue
+            ? $"Exported map '{mapName}' ({deduplicatedEdges.Count} collision lines, heightmap {heightmapData.Value.Resolution}x{heightmapData.Value.Resolution})."
+            : $"Exported map '{mapName}' ({deduplicatedEdges.Count} collision lines, {deduplicatedTriangles.Count} triangles).";
+        EditorUtility.DisplayDialog("Export Complete", $"{statsMessage}\n{allMapNames.Count} total map(s) registered.", "OK");
     }
 
     private static List<string> DiscoverMapNames()
@@ -165,7 +152,8 @@ public static class MapExporter
         return code.ToString();
     }
 
-    private static string GenerateMapFile(string mapName, List<Edge2D> lines, List<Triangle3D> triangles, Vector3 spawnPosition)
+    private static string GenerateMapFile(string mapName, List<Edge2D> lines, List<Triangle3D> triangles,
+        Vector3 spawnPosition, HeightmapExportData? heightmap)
     {
         var code = new StringBuilder();
         code.AppendLine("// Auto-generated by MapExporter. Do not edit.");
@@ -186,24 +174,61 @@ public static class MapExporter
         code.AppendLine("        };");
         code.AppendLine();
 
-        // Triangle data as flat float array (9 floats per tri: v0x,v0y,v0z, v1x,v1y,v1z, v2x,v2y,v2z)
-        code.AppendLine($"        private static readonly float[] _{mapName}TriangleData = new float[]");
-        code.AppendLine("        {");
-        for (int i = 0; i < triangles.Count; i++)
+        if (heightmap.HasValue)
         {
-            var tri = triangles[i];
-            code.AppendLine($"            {F(tri.V0.x)},{F(tri.V0.y)},{F(tri.V0.z)},{F(tri.V1.x)},{F(tri.V1.y)},{F(tri.V1.z)},{F(tri.V2.x)},{F(tri.V2.y)},{F(tri.V2.z)},");
-        }
-        code.AppendLine("        };");
-        code.AppendLine();
+            var hm = heightmap.Value;
 
-        // Lazy map definition - only constructed when first accessed
-        code.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{mapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
-        code.AppendLine($"            \"{mapName}\",");
-        code.AppendLine($"            BuildLines(_{mapName}LineData),");
-        code.AppendLine($"            BuildTriangles(_{mapName}TriangleData),");
-        code.AppendLine($"            new Vector3({F(spawnPosition.x)}, {F(spawnPosition.y)}, {F(spawnPosition.z)})");
-        code.AppendLine("        ));");
+            // Heightmap data as flat float array (row-major: heights[z * resolution + x])
+            code.AppendLine($"        private static readonly float[] _{mapName}HeightmapData = new float[]");
+            code.AppendLine("        {");
+            for (int z = 0; z < hm.Resolution; z++)
+            {
+                var sb = new StringBuilder("            ");
+                for (int x = 0; x < hm.Resolution; x++)
+                {
+                    sb.Append(F(hm.Heights[z * hm.Resolution + x]));
+                    sb.Append(',');
+                }
+                code.AppendLine(sb.ToString());
+            }
+            code.AppendLine("        };");
+            code.AppendLine();
+
+            // Lazy map definition using heightmap constructor
+            code.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{mapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
+            code.AppendLine($"            \"{mapName}\",");
+            code.AppendLine($"            BuildLines(_{mapName}LineData),");
+            code.AppendLine($"            new Vector3({F(spawnPosition.x)}, {F(spawnPosition.y)}, {F(spawnPosition.z)}),");
+            code.AppendLine($"            _{mapName}HeightmapData,");
+            code.AppendLine($"            {hm.Resolution},");
+            code.AppendLine($"            {F(hm.OriginX)},");
+            code.AppendLine($"            {F(hm.OriginZ)},");
+            code.AppendLine($"            {F(hm.SizeX)},");
+            code.AppendLine($"            {F(hm.SizeZ)}");
+            code.AppendLine("        ));");
+        }
+        else
+        {
+            // Triangle data as flat float array (9 floats per tri: v0x,v0y,v0z, v1x,v1y,v1z, v2x,v2y,v2z)
+            code.AppendLine($"        private static readonly float[] _{mapName}TriangleData = new float[]");
+            code.AppendLine("        {");
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                var tri = triangles[i];
+                code.AppendLine($"            {F(tri.V0.x)},{F(tri.V0.y)},{F(tri.V0.z)},{F(tri.V1.x)},{F(tri.V1.y)},{F(tri.V1.z)},{F(tri.V2.x)},{F(tri.V2.y)},{F(tri.V2.z)},");
+            }
+            code.AppendLine("        };");
+            code.AppendLine();
+
+            // Lazy map definition using triangle constructor
+            code.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{mapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
+            code.AppendLine($"            \"{mapName}\",");
+            code.AppendLine($"            BuildLines(_{mapName}LineData),");
+            code.AppendLine($"            BuildTriangles(_{mapName}TriangleData),");
+            code.AppendLine($"            new Vector3({F(spawnPosition.x)}, {F(spawnPosition.y)}, {F(spawnPosition.z)})");
+            code.AppendLine("        ));");
+        }
+
         code.AppendLine($"        public static MapDefinition {mapName} => _{mapName}Lazy.Value;");
 
         code.AppendLine("    }");
@@ -212,18 +237,27 @@ public static class MapExporter
         return code.ToString();
     }
 
-    private static Mesh TerrainToMesh(Terrain terrain, int resolution)
+    private struct HeightmapExportData
+    {
+        public float[] Heights;
+        public int Resolution;
+        public float OriginX, OriginZ;
+        public float SizeX, SizeZ;
+    }
+
+    private static HeightmapExportData ExtractHeightmap(Terrain terrain, int resolution)
     {
         var data = terrain.terrainData;
         var hmRes = data.heightmapResolution;
         var size = data.size;
+        var pos = terrain.transform.position;
 
         resolution = Mathf.Clamp(resolution, 2, hmRes);
         int step = Mathf.Max(1, (hmRes - 1) / (resolution - 1));
         int actualRes = (hmRes - 1) / step + 1;
 
-        var heights = data.GetHeights(0, 0, hmRes, hmRes);
-        var vertices = new Vector3[actualRes * actualRes];
+        var unityHeights = data.GetHeights(0, 0, hmRes, hmRes);
+        var heights = new float[actualRes * actualRes];
 
         for (int z = 0; z < actualRes; z++)
         {
@@ -231,45 +265,56 @@ public static class MapExporter
             {
                 int hmX = Mathf.Min(x * step, hmRes - 1);
                 int hmZ = Mathf.Min(z * step, hmRes - 1);
-
-                float xPos = (float)hmX / (hmRes - 1) * size.x;
-                float yPos = heights[hmZ, hmX] * size.y;
-                float zPos = (float)hmZ / (hmRes - 1) * size.z;
-
-                vertices[z * actualRes + x] = new Vector3(xPos, yPos, zPos);
+                heights[z * actualRes + x] = unityHeights[hmZ, hmX] * size.y + pos.y;
             }
         }
 
-        var triangles = new int[(actualRes - 1) * (actualRes - 1) * 6];
-        int idx = 0;
+        Debug.Log($"Extracted heightmap from Terrain '{terrain.name}': {actualRes}x{actualRes} grid, {heights.Length} heights");
 
-        for (int z = 0; z < actualRes - 1; z++)
+        return new HeightmapExportData
         {
-            for (int x = 0; x < actualRes - 1; x++)
-            {
-                int topLeft = z * actualRes + x;
-                int topRight = topLeft + 1;
-                int bottomLeft = (z + 1) * actualRes + x;
-                int bottomRight = bottomLeft + 1;
+            Heights = heights,
+            Resolution = actualRes,
+            OriginX = pos.x,
+            OriginZ = pos.z,
+            SizeX = size.x,
+            SizeZ = size.z
+        };
+    }
 
-                triangles[idx++] = topLeft;
-                triangles[idx++] = bottomLeft;
-                triangles[idx++] = topRight;
+    private static List<Edge2D> ExtractHeightmapBoundaryEdges(HeightmapExportData hm)
+    {
+        var edges = new List<Edge2D>();
+        float cellX = hm.SizeX / (hm.Resolution - 1);
+        float cellZ = hm.SizeZ / (hm.Resolution - 1);
 
-                triangles[idx++] = topRight;
-                triangles[idx++] = bottomLeft;
-                triangles[idx++] = bottomRight;
-            }
+        for (int i = 0; i < hm.Resolution - 1; i++)
+        {
+            float x0 = hm.OriginX + i * cellX;
+            float x1 = hm.OriginX + (i + 1) * cellX;
+
+            // Top edge (z = originZ)
+            edges.Add(new Edge2D(new Vector2(x0, hm.OriginZ), new Vector2(x1, hm.OriginZ)));
+            // Bottom edge (z = originZ + sizeZ)
+            edges.Add(new Edge2D(
+                new Vector2(x0, hm.OriginZ + hm.SizeZ),
+                new Vector2(x1, hm.OriginZ + hm.SizeZ)));
         }
 
-        var mesh = new Mesh();
-        if (vertices.Length > 65535)
-            mesh.indexFormat = IndexFormat.UInt32;
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
+        for (int i = 0; i < hm.Resolution - 1; i++)
+        {
+            float z0 = hm.OriginZ + i * cellZ;
+            float z1 = hm.OriginZ + (i + 1) * cellZ;
 
-        Debug.Log($"Generated mesh from Terrain '{terrain.name}': {actualRes}x{actualRes} grid, {vertices.Length} vertices, {triangles.Length / 3} triangles");
-        return mesh;
+            // Left edge (x = originX)
+            edges.Add(new Edge2D(new Vector2(hm.OriginX, z0), new Vector2(hm.OriginX, z1)));
+            // Right edge (x = originX + sizeX)
+            edges.Add(new Edge2D(
+                new Vector2(hm.OriginX + hm.SizeX, z0),
+                new Vector2(hm.OriginX + hm.SizeX, z1)));
+        }
+
+        return edges;
     }
 
     private static List<Triangle3D> ExtractTriangles(Mesh mesh, Transform transform)
@@ -322,69 +367,6 @@ public static class MapExporter
         }
 
         return boundaryEdges;
-    }
-
-    private static List<Edge2D> ExtractSlopeTransitionEdges(Mesh mesh, Transform transform, float maxSlopeAngle)
-    {
-        var triangles = mesh.triangles;
-        var vertices = mesh.vertices;
-        var edgeTriangles = new Dictionary<(int, int), List<int>>();
-
-        for (int i = 0; i < triangles.Length; i += 3)
-        {
-            int triIdx = i / 3;
-            AddEdgeTri(edgeTriangles, triangles[i], triangles[i + 1], triIdx);
-            AddEdgeTri(edgeTriangles, triangles[i + 1], triangles[i + 2], triIdx);
-            AddEdgeTri(edgeTriangles, triangles[i + 2], triangles[i], triIdx);
-        }
-
-        var result = new List<Edge2D>();
-        foreach (var kvp in edgeTriangles)
-        {
-            if (kvp.Value.Count != 2) continue;
-
-            bool walkableA = IsTriangleWalkable(kvp.Value[0], triangles, vertices, transform, maxSlopeAngle);
-            bool walkableB = IsTriangleWalkable(kvp.Value[1], triangles, vertices, transform, maxSlopeAngle);
-
-            if (walkableA != walkableB)
-            {
-                var worldA = transform.TransformPoint(vertices[kvp.Key.Item1]);
-                var worldB = transform.TransformPoint(vertices[kvp.Key.Item2]);
-                result.Add(new Edge2D(
-                    new Vector2(worldA.x, worldA.z),
-                    new Vector2(worldB.x, worldB.z)
-                ));
-            }
-        }
-        return result;
-    }
-
-    private static void AddEdgeTri(Dictionary<(int, int), List<int>> edgeTriangles, int a, int b, int triIdx)
-    {
-        var key = a < b ? (a, b) : (b, a);
-        if (!edgeTriangles.TryGetValue(key, out var list))
-        {
-            list = new List<int>();
-            edgeTriangles[key] = list;
-        }
-        list.Add(triIdx);
-    }
-
-    private static bool IsTriangleWalkable(int triIdx, int[] triangles, Vector3[] vertices, Transform transform, float maxSlopeAngle)
-    {
-        int i = triIdx * 3;
-        var worldV0 = transform.TransformPoint(vertices[triangles[i]]);
-        var worldV1 = transform.TransformPoint(vertices[triangles[i + 1]]);
-        var worldV2 = transform.TransformPoint(vertices[triangles[i + 2]]);
-
-        var edge1 = worldV1 - worldV0;
-        var edge2 = worldV2 - worldV0;
-        var normal = Vector3.Cross(edge1, edge2).normalized;
-
-        var angle = Vector3.Angle(normal, Vector3.up);
-        // Check both orientations (normal could point up or down depending on winding)
-        if (angle > 90f) angle = 180f - angle;
-        return angle <= maxSlopeAngle;
     }
 
     private static void CountEdge(Dictionary<(int, int), int> edgeCounts, int a, int b)

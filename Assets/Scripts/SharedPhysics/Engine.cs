@@ -45,13 +45,13 @@ namespace SharedPhysics
             return allLines.Where(line => BoundingBox.FromLine(line).Overlaps(movementBounds)).ToArray();
         }
 
-        public static Vector2 ProjectMovementOntoSurface(
-            Vector2 normalizedDirectionXZ, float surfaceSpeed, Triangle triangle, float maxSlopeAngle)
+        private static Vector2 ProjectMovementOntoSurface(
+            Vector2 normalizedDirectionXz, float surfaceSpeed, Triangle triangle, float maxSlopeAngle)
         {
             var normal = Triangle.GetNormal(triangle);
             var slopeAngle = Triangle.GetSlopeAngle(triangle);
 
-            var direction3D = new Vector3(normalizedDirectionXZ.X, 0, normalizedDirectionXZ.Y);
+            var direction3D = new Vector3(normalizedDirectionXz.X, 0, normalizedDirectionXz.Y);
 
             var projected = direction3D - normal * Vector3.Dot(direction3D, normal);
             var projectedMag = projected.GetMagnitude();
@@ -65,15 +65,16 @@ namespace SharedPhysics
             {
                 var contour = Vector3.Cross(normal, Vector3.Up).Normalized();
                 var contourDot = Vector3.Dot(surfaceDir, contour);
-                surfaceDir = contour * contourDot;
-                var contourMag = surfaceDir.GetMagnitude();
-                if (contourMag < 0.0001f)
+                if (MathF.Abs(contourDot) < 0.0001f)
                     return Vector2.Zero;
-                surfaceDir = surfaceDir / contourMag;
+                // contourDot naturally scales the speed: walking straight into
+                // the slope yields ~0, walking along it yields ~1
+                var movement3D = contour * (contourDot * surfaceSpeed);
+                return new Vector2(movement3D.X, movement3D.Z);
             }
 
-            var movement3D = surfaceDir * surfaceSpeed;
-            return new Vector2(movement3D.X, movement3D.Z);
+            var movement3D2 = surfaceDir * surfaceSpeed;
+            return new Vector2(movement3D2.X, movement3D2.Z);
         }
 
         public static Entity[] Simulate(
@@ -83,13 +84,13 @@ namespace SharedPhysics
         }
 
         public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines, TerrainGrid? terrain)
+            float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines, ITerrain? terrain)
         {
             return Simulate(deltaTime, sequenceId, entities, new LineGrid(lines), terrain);
         }
 
         public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, TerrainGrid? terrain)
+            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, ITerrain? terrain)
         {
             var processed = new Entity[entities.Length];
             var i = 0;

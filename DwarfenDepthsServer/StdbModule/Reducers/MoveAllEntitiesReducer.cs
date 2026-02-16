@@ -3,7 +3,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    private static TerrainGrid? _terrainGrid;
+    private static ITerrain? _terrainGrid;
     private static LineGrid? _lineGrid;
 
     [Reducer]
@@ -22,7 +22,20 @@ public static partial class Module
         entityUpdate.DeltaTime += secondsSinceLastTick;
 
         var map = MapData.GetMap(config.MapName);
-        _terrainGrid ??= map.Triangles.Length > 0 ? new TerrainGrid(map.Triangles) : null;
+        if (_terrainGrid == null)
+        {
+            if (map.HasHeightmap)
+            {
+                _terrainGrid = new Heightmap(
+                    map.HeightmapData!, map.HeightmapResolution,
+                    map.HeightmapOriginX, map.HeightmapOriginZ,
+                    map.HeightmapSizeX, map.HeightmapSizeZ);
+            }
+            else if (map.Triangles.Length > 0)
+            {
+                _terrainGrid = new TerrainGrid(map.Triangles);
+            }
+        }
         _lineGrid ??= new LineGrid(map.Lines);
 
         while (entityUpdate.DeltaTime >= config.UpdateEntityInterval)
@@ -64,7 +77,7 @@ public static partial class Module
         ulong sequenceId,
         Config config,
         LineGrid lineGrid,
-        TerrainGrid? terrain)
+        ITerrain? terrain)
     {
         var hasInput = playerInputs.TryGetValue(entity.EntityId, out var playerInput);
         entity.Direction = hasInput ? playerInput.Direction : entity.Direction;

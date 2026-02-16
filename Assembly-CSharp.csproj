@@ -70,6 +70,7 @@
     <Compile Include="Assets\server-types\Reducers\UpdatePlayerInput.g.cs" />
     <Compile Include="Assets\Scripts\UpdateRateCache.cs" />
     <Compile Include="Assets\server-types\Tables\Player.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\Heightmap.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\TerrainGrid.cs" />
@@ -95,6 +96,7 @@
     <Compile Include="Assets\server-types\Types\DbVector2.g.cs" />
     <Compile Include="Assets\server-types\Reducers\MoveAllEntities.g.cs" />
     <Compile Include="Assets\server-types\Types\Faction.g.cs" />
+    <Compile Include="Assets\Scripts\SharedPhysics\ITerrain.cs" />
     <Compile Include="Assets\server-types\Types\DbVector3.g.cs" />
     <Compile Include="Assets\Scripts\Vector2Extensions.cs" />
     <Compile Include="Assets\Scripts\EntityAnimator.cs" />

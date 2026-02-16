@@ -37,6 +37,12 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Triangle.cs">
         <Link>Triangle.cs</Link>
       </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\ITerrain.cs">
+        <Link>ITerrain.cs</Link>
+      </Compile>
+      <Compile Include="..\..\Assets\Scripts\SharedPhysics\Heightmap.cs">
+        <Link>Heightmap.cs</Link>
+      </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\TerrainGrid.cs">
         <Link>TerrainGrid.cs</Link>
       </Compile>

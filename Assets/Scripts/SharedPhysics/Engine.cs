@@ -9,7 +9,7 @@ namespace SharedPhysics
         [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
         public const float Gravity = -19.62f;
         public const float JumpImpulse = 8f;
-        public const float MaxSlopeAngle = 45f;
+        public const float MaxSlopeAngle = 60f;
         public const float GroundSnapDistance = 0.1f;
         public const float TerminalVelocity = -50f;
 
@@ -73,8 +73,11 @@ namespace SharedPhysics
                 return new Vector2(movement3D.X, movement3D.Z);
             }
 
+            // Use the surface projection for speed (accounts for slope steepness)
+            // but preserve the original XZ direction to prevent drift on slopes
             var movement3D2 = surfaceDir * surfaceSpeed;
-            return new Vector2(movement3D2.X, movement3D2.Z);
+            float xzSpeed = new Vector2(movement3D2.X, movement3D2.Z).GetMagnitude();
+            return normalizedDirectionXz * xzSpeed;
         }
 
         public static Entity[] Simulate(
@@ -105,10 +108,11 @@ namespace SharedPhysics
                 var surfaceSpeed = entity.Speed * backpedalMultiplier * deltaTime;
 
                 Vector2 targetMovement;
+                Triangle? currentTriangle = null;
 
                 if (terrain != null)
                 {
-                    var currentTriangle = terrain.GetTriangle(entity.Position.ToXZ());
+                    currentTriangle = terrain.GetTriangle(entity.Position.ToXZ());
                     if (currentTriangle.HasValue && normalizedDirection.SqrMagnitude > 0.0001f)
                     {
                         targetMovement = ProjectMovementOntoSurface(
@@ -117,6 +121,17 @@ namespace SharedPhysics
                     else
                     {
                         targetMovement = normalizedDirection * surfaceSpeed;
+                    }
+
+                    // Gravity-based slide on slopes exceeding max angle
+                    if (currentTriangle.HasValue && entity.IsGrounded &&
+                        Triangle.GetSlopeAngle(currentTriangle.Value) > MaxSlopeAngle)
+                    {
+                        var normal = Triangle.GetNormal(currentTriangle.Value);
+                        var down = new Vector3(0, -1, 0);
+                        var gravityOnSurface = down - normal * Vector3.Dot(down, normal);
+                        targetMovement = targetMovement +
+                            new Vector2(gravityOnSurface.X, gravityOnSurface.Z) * MathF.Abs(Gravity) * deltaTime;
                     }
                 }
                 else
@@ -154,7 +169,21 @@ namespace SharedPhysics
                         if (groundHeight.HasValue)
                         {
                             float heightDifference = entity.Position.Y - groundHeight.Value;
-                            if (heightDifference > GroundSnapDistance)
+
+                            // Dynamic snap distance: on slopes, the per-tick height
+                            // change can far exceed GroundSnapDistance. Use the current
+                            // slope angle to compute the expected height drop, so smooth
+                            // downhill movement stays grounded while actual cliffs
+                            // (where the current surface is flat) still trigger airborne.
+                            float snapDistance = GroundSnapDistance;
+                            if (currentTriangle.HasValue && heightDifference > 0)
+                            {
+                                float slopeRad = Triangle.GetSlopeAngle(currentTriangle.Value) * MathF.PI / 180f;
+                                float xzDist = (targetPositionXZ - currentPositionXZ).GetMagnitude();
+                                snapDistance = MathF.Max(GroundSnapDistance, xzDist * MathF.Tan(slopeRad) + GroundSnapDistance);
+                            }
+
+                            if (heightDifference > snapDistance)
                             {
                                 // Walking off a cliff - become airborne
                                 processed[i].Position = Vector3.FromXZ(targetPositionXZ, entity.Position.Y);

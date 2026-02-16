@@ -357,11 +357,11 @@ public class SharedPhysicsEngineTests
     }
 
     [Fact]
-    public void Simulating_3D_prevents_uphill_movement_on_steep_slope()
+    public void Simulating_3D_slides_downhill_on_steep_slope()
     {
-        // 60-degree slope: rises by D*tan(60°) over D units in Z.
+        // 70-degree slope (exceeds MaxSlopeAngle of 60°)
         float halfRun = 50f;
-        float halfRise = halfRun * MathF.Tan(60f * MathF.PI / 180f);
+        float halfRise = halfRun * MathF.Tan(70f * MathF.PI / 180f);
         var steepTerrain = new TerrainGrid(new[]
         {
             new Triangle(
@@ -379,15 +379,84 @@ public class SharedPhysicsEngineTests
         var entity = new Entity
         {
             Id = 1, Position = new Vector3(0, 0, 0),
-            Direction = new Vector2(0, 1), // Moving uphill
+            Direction = new Vector2(0, 1), // Attempting to move uphill
             Speed = 10f, IsGrounded = true
         };
 
         var result = Engine.Simulate(1f, 1, new[] { entity }, [], steepTerrain);
 
-        // Should not have moved significantly uphill
-        Assert.True(MathF.Abs(result[0].Position.Z) < 0.1f,
-            $"Entity should not move uphill on a steep slope, but moved to Z={result[0].Position.Z}");
+        // Entity should slide downhill (negative Z) despite trying to move uphill
+        Assert.True(result[0].Position.Z < -0.1f,
+            $"Entity should slide downhill on a steep slope, but Z={result[0].Position.Z}");
+    }
+
+    [Fact]
+    public void Simulating_3D_slides_downhill_with_no_input_on_steep_slope()
+    {
+        // 70-degree slope (exceeds MaxSlopeAngle of 60°)
+        float halfRun = 50f;
+        float halfRise = halfRun * MathF.Tan(70f * MathF.PI / 180f);
+        var steepTerrain = new TerrainGrid(new[]
+        {
+            new Triangle(
+                new Vector3(-100, -halfRise, -halfRun),
+                new Vector3(-100, halfRise, halfRun),
+                new Vector3(100, -halfRise, -halfRun)
+            ),
+            new Triangle(
+                new Vector3(100, -halfRise, -halfRun),
+                new Vector3(-100, halfRise, halfRun),
+                new Vector3(100, halfRise, halfRun)
+            )
+        });
+
+        var entity = new Entity
+        {
+            Id = 1, Position = new Vector3(0, 0, 0),
+            Direction = Vector2.Zero, // No input
+            Speed = 10f, IsGrounded = true
+        };
+
+        var result = Engine.Simulate(1f, 1, new[] { entity }, [], steepTerrain);
+
+        // Even with no input, entity should slide downhill
+        Assert.True(result[0].Position.Z < -0.1f,
+            $"Entity should slide downhill with no input on steep slope, but Z={result[0].Position.Z}");
+    }
+
+    [Fact]
+    public void Simulating_3D_stays_grounded_going_downhill_on_slope()
+    {
+        // 30-degree slope: height decreases as Z increases (downhill in +Z)
+        float halfRun = 50f;
+        float halfRise = halfRun * MathF.Tan(30f * MathF.PI / 180f);
+        var terrain = new TerrainGrid(new[]
+        {
+            new Triangle(
+                new Vector3(-100, halfRise, -halfRun),
+                new Vector3(-100, -halfRise, halfRun),
+                new Vector3(100, halfRise, -halfRun)
+            ),
+            new Triangle(
+                new Vector3(100, halfRise, -halfRun),
+                new Vector3(-100, -halfRise, halfRun),
+                new Vector3(100, -halfRise, halfRun)
+            )
+        });
+
+        var entity = new Entity
+        {
+            Id = 1, Position = new Vector3(0, 0, 0),
+            Direction = new Vector2(0, 1), // Moving downhill (+Z)
+            Speed = 10f, Rotation = 0f, IsGrounded = true
+        };
+
+        var result = Engine.Simulate(1f, 1, new[] { entity }, [], terrain);
+
+        Assert.True(result[0].IsGrounded,
+            $"Entity should stay grounded going downhill, but IsGrounded={result[0].IsGrounded}, Y={result[0].Position.Y}");
+        Assert.True(result[0].Position.Y < 0, "Entity should have descended on the slope");
+        Assert.True(result[0].Position.Z > 0, "Entity should have moved forward");
     }
 
     [Fact]

@@ -35,5 +35,6 @@ public class ServerEntityMovement : MonoBehaviour
         entityRotationInterpolation?.SetCanonicalRotation(Quaternion.Euler(0, newServerEntityState.Rotation, 0));
         var relativeDirection = transform.InverseTransformDirection(direction);
         entityAnimator?.SetMovement(direction, new Vector2(relativeDirection.x, relativeDirection.z));
+        entityAnimator?.SetAirborneState(newServerEntityState.IsGrounded, newServerEntityState.VerticalVelocity);
     }
 }

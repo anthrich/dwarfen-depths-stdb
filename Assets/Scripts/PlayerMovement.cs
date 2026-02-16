@@ -81,5 +81,6 @@ public class PlayerMovement :
     public void SubscriptionUpdate(SharedPhysics.Entity update)
     {
         entityPositionInterpolation?.SetCanonicalPosition(update.Position.ToGamePosition());
+        entityAnimator?.SetAirborneState(update.IsGrounded, update.VerticalVelocity);
     }
 }

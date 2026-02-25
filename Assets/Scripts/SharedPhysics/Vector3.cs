@@ -20,9 +20,9 @@ namespace SharedPhysics
         public float GetMagnitude() => MathF.Sqrt(SqrMagnitude);
         public readonly Vector3 Normalized() => Normalize(this);
 
-        public Vector2 ToXZ() => new Vector2(X, Z);
+        public readonly Vector2 ToXz() => new(X, Z);
 
-        public static Vector3 FromXZ(Vector2 xz, float y) => new Vector3(xz.X, y, xz.Y);
+        public static Vector3 FromXz(Vector2 xz, float y) => new(xz.X, y, xz.Y);
 
         public static Vector3 operator +(Vector3 a, Vector3 b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
         public static Vector3 operator -(Vector3 a, Vector3 b) => new(a.X - b.X, a.Y - b.Y, a.Z - b.Z);

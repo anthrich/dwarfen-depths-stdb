@@ -95,7 +95,7 @@ public class SharedPhysicsEngineTests
                 X = 1.3535533905932737622004221810524f,
                 Y = 1.3535533905932737622004221810524f
             },
-            result[0].Position.ToXZ()
+            result[0].Position.ToXz()
         );
     }
 
@@ -120,7 +120,7 @@ public class SharedPhysicsEngineTests
         var result = Engine.Simulate(1, 2, entities, []);
 
         // Assert
-        Assert.Equal(new Vector2 { X = 0.5f, Y = 1 }, result[0].Position.ToXZ());
+        Assert.Equal(new Vector2 { X = 0.5f, Y = 1 }, result[0].Position.ToXz());
     }
 
     [Theory]
@@ -146,7 +146,7 @@ public class SharedPhysicsEngineTests
         var result = Engine.Simulate(1, 2, entities, []);
 
         // Assert
-        Assert.Equal(new Vector2 { X = 1 + strafeDirection, Y = 1 }, result[0].Position.ToXZ());
+        Assert.Equal(new Vector2 { X = 1 + strafeDirection, Y = 1 }, result[0].Position.ToXz());
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class SharedPhysicsEngineTests
         var result = Engine.Simulate(1, 2, entities, []);
 
         // Assert
-        Assert.Equal(new Vector2 { X = 0, Y = 1f }, result[0].Position.ToXZ());
+        Assert.Equal(new Vector2 { X = 0, Y = 1f }, result[0].Position.ToXz());
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public class SharedPhysicsEngineTests
                 X = 1.0353553f,
                 Y = 5.4142137f
             },
-            result[0].Position.ToXZ()
+            result[0].Position.ToXz()
         );
     }
 
@@ -689,10 +689,10 @@ public class SharedPhysicsEngineTests
     public void Vector3_ToXZ_and_FromXZ_roundtrip()
     {
         var v3 = new Vector3(1, 5, 3);
-        var v2 = v3.ToXZ();
+        var v2 = v3.ToXz();
         Assert.Equal(1f, v2.X, 0.001f);
         Assert.Equal(3f, v2.Y, 0.001f);
-        var back = Vector3.FromXZ(v2, 5);
+        var back = Vector3.FromXz(v2, 5);
         Assert.Equal(v3, back);
     }
 

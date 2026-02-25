@@ -32,7 +32,7 @@ public static partial class Module
     private static void InsertRatmen(ReducerContext ctx, EntityUpdate entityUpdate, MapDefinition map)
     {
         var spawn = map.DefaultSpawnPosition;
-        var spawnXZ = spawn.ToXZ();
+        var spawnXZ = spawn.ToXz();
         var offsets = new Vector2[] { new(10f, 0f), new(20f, 0f) };
         foreach (var offset in offsets)
         {

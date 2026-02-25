@@ -7,7 +7,7 @@ namespace SharedPhysics
     public static class Engine
     {
         [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
-        public const float Gravity = -19.62f;
+        public const float Gravity = -27.62f;
         public const float JumpImpulse = 8f;
         public const float MaxSlopeAngle = 60f;
         public const float GroundSnapDistance = 0.1f;
@@ -112,7 +112,7 @@ namespace SharedPhysics
 
                 if (terrain != null)
                 {
-                    currentTriangle = terrain.GetTriangle(entity.Position.ToXZ());
+                    currentTriangle = terrain.GetTriangle(entity.Position.ToXz());
                     if (currentTriangle.HasValue && normalizedDirection.SqrMagnitude > 0.0001f)
                     {
                         targetMovement = ProjectMovementOntoSurface(
@@ -139,22 +139,22 @@ namespace SharedPhysics
                     targetMovement = normalizedDirection * surfaceSpeed;
                 }
 
-                var currentPositionXZ = entity.Position.ToXZ();
-                var targetPositionXZ = currentPositionXZ + targetMovement;
-                var movementLine = new Line(currentPositionXZ, targetPositionXZ);
+                var currentPositionXz = entity.Position.ToXz();
+                var targetPositionXz = currentPositionXz + targetMovement;
+                var movementLine = new Line(currentPositionXz, targetPositionXz);
                 lineGrid.GetNearbyLines(BoundingBox.FromLine(movementLine), _nearbyLinesBuffer);
 
                 foreach (var line in _nearbyLinesBuffer)
                 {
                     var intersection = GetIntersection(movementLine, line);
                     if (!intersection.HasValue) continue;
-                    var safeDistance = (intersection.Value - currentPositionXZ).Normalized() * 0.05f;
-                    var safeMovement = intersection.Value - safeDistance - currentPositionXZ;
-                    var safePosition = currentPositionXZ + safeMovement;
+                    var safeDistance = (intersection.Value - currentPositionXz).Normalized() * 0.05f;
+                    var safeMovement = intersection.Value - safeDistance - currentPositionXz;
+                    var safePosition = currentPositionXz + safeMovement;
                     var remainingMovement = targetMovement - safeMovement;
                     var glideMovement = Line.GlideAlong(line, remainingMovement);
-                    targetPositionXZ = safePosition + glideMovement;
-                    movementLine = new Line(currentPositionXZ, targetPositionXZ);
+                    targetPositionXz = safePosition + glideMovement;
+                    movementLine = new Line(currentPositionXz, targetPositionXz);
                 }
 
                 processed[i] = entity;
@@ -162,7 +162,7 @@ namespace SharedPhysics
 
                 if (terrain != null)
                 {
-                    var groundHeight = terrain.GetGroundHeight(targetPositionXZ);
+                    var groundHeight = terrain.GetGroundHeight(targetPositionXz);
 
                     if (entity.IsGrounded)
                     {
@@ -179,21 +179,21 @@ namespace SharedPhysics
                             if (currentTriangle.HasValue && heightDifference > 0)
                             {
                                 float slopeRad = Triangle.GetSlopeAngle(currentTriangle.Value) * MathF.PI / 180f;
-                                float xzDist = (targetPositionXZ - currentPositionXZ).GetMagnitude();
+                                float xzDist = (targetPositionXz - currentPositionXz).GetMagnitude();
                                 snapDistance = MathF.Max(GroundSnapDistance, xzDist * MathF.Tan(slopeRad) + GroundSnapDistance);
                             }
 
                             if (heightDifference > snapDistance)
                             {
                                 // Walking off a cliff - become airborne
-                                processed[i].Position = Vector3.FromXZ(targetPositionXZ, entity.Position.Y);
+                                processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
                                 processed[i].IsGrounded = false;
                                 processed[i].VerticalVelocity = 0;
                             }
                             else
                             {
                                 // Normal ground following
-                                processed[i].Position = Vector3.FromXZ(targetPositionXZ, groundHeight.Value);
+                                processed[i].Position = Vector3.FromXz(targetPositionXz, groundHeight.Value);
                                 processed[i].IsGrounded = true;
                                 processed[i].VerticalVelocity = 0;
                             }
@@ -201,7 +201,7 @@ namespace SharedPhysics
                         else
                         {
                             // Off-mesh while grounded: become airborne at current height
-                            processed[i].Position = Vector3.FromXZ(targetPositionXZ, entity.Position.Y);
+                            processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
                             processed[i].IsGrounded = false;
                             processed[i].VerticalVelocity = 0;
                         }
@@ -216,13 +216,13 @@ namespace SharedPhysics
                         if (groundHeight.HasValue && newY <= groundHeight.Value)
                         {
                             // Landing
-                            processed[i].Position = Vector3.FromXZ(targetPositionXZ, groundHeight.Value);
+                            processed[i].Position = Vector3.FromXz(targetPositionXz, groundHeight.Value);
                             processed[i].VerticalVelocity = 0;
                             processed[i].IsGrounded = true;
                         }
                         else
                         {
-                            processed[i].Position = Vector3.FromXZ(targetPositionXZ, newY);
+                            processed[i].Position = Vector3.FromXz(targetPositionXz, newY);
                             processed[i].VerticalVelocity = verticalVelocity;
                             processed[i].IsGrounded = false;
                         }
@@ -231,7 +231,7 @@ namespace SharedPhysics
                 else
                 {
                     // Legacy 2D mode: position stays as Vector2-equivalent
-                    processed[i].Position = Vector3.FromXZ(targetPositionXZ, entity.Position.Y);
+                    processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
                 }
 
                 i++;

@@ -7,11 +7,23 @@ namespace SharedPhysics
     public static class Engine
     {
         [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
-        public const float Gravity = -27.62f;
+        private const float Gravity = -27.62f;
         public const float JumpImpulse = 8f;
-        public const float MaxSlopeAngle = 60f;
-        public const float GroundSnapDistance = 0.1f;
-        public const float TerminalVelocity = -50f;
+        private const float MaxSlopeAngle = 60f;
+        private const float GroundSnapDistance = 0.1f;
+        private const float TerminalVelocity = -50f;
+
+        private readonly struct GroundContact
+        {
+            public readonly float? Height;       // null = off mesh
+            public readonly float SnapDistance;
+
+            public GroundContact(float? height, float snapDistance)
+            {
+                Height = height;
+                SnapDistance = snapDistance;
+            }
+        }
 
         public static Vector2? GetIntersection(Line line1, Line line2)
         {
@@ -80,6 +92,116 @@ namespace SharedPhysics
             return normalizedDirectionXz * xzSpeed;
         }
 
+        private static Vector2 ComputeXzMovement(
+            Vector2 normalizedDirection, float surfaceSpeed,
+            Triangle? currentTriangle, bool isGrounded, bool hasTerrain, float deltaTime)
+        {
+            if (!hasTerrain)
+                return normalizedDirection * surfaceSpeed;
+
+            Vector2 targetMovement;
+            if (currentTriangle.HasValue && normalizedDirection.SqrMagnitude > 0.0001f)
+            {
+                targetMovement = ProjectMovementOntoSurface(
+                    normalizedDirection, surfaceSpeed, currentTriangle.Value, MaxSlopeAngle);
+            }
+            else
+            {
+                targetMovement = normalizedDirection * surfaceSpeed;
+            }
+
+            // Gravity-based slide on slopes exceeding max angle
+            if (currentTriangle.HasValue && isGrounded &&
+                Triangle.GetSlopeAngle(currentTriangle.Value) > MaxSlopeAngle)
+            {
+                var normal = Triangle.GetNormal(currentTriangle.Value);
+                var down = new Vector3(0, -1, 0);
+                var gravityOnSurface = down - normal * Vector3.Dot(down, normal);
+                targetMovement += new Vector2(gravityOnSurface.X, gravityOnSurface.Z) * MathF.Abs(Gravity) * deltaTime;
+            }
+
+            return targetMovement;
+        }
+
+        private static Vector2 ApplyWallCollisions(
+            Vector2 currentPositionXz, Vector2 targetPositionXz,
+            LineGrid lineGrid, List<Line> nearbyLinesBuffer)
+        {
+            var targetMovement = targetPositionXz - currentPositionXz;
+            var movementLine = new Line(currentPositionXz, targetPositionXz);
+            lineGrid.GetNearbyLines(BoundingBox.FromLine(movementLine), nearbyLinesBuffer);
+
+            foreach (var line in nearbyLinesBuffer)
+            {
+                var intersection = GetIntersection(movementLine, line);
+                if (!intersection.HasValue) continue;
+                var safeDistance = (intersection.Value - currentPositionXz).Normalized() * 0.05f;
+                var safeMovement = intersection.Value - safeDistance - currentPositionXz;
+                var safePosition = currentPositionXz + safeMovement;
+                var remainingMovement = targetMovement - safeMovement;
+                var glideMovement = Line.GlideAlong(line, remainingMovement);
+                targetPositionXz = safePosition + glideMovement;
+                movementLine = new Line(currentPositionXz, targetPositionXz);
+            }
+
+            return targetPositionXz;
+        }
+
+        private static GroundContact ResolveGroundContact(
+            ITerrain terrain, Vector2 currentPositionXz, float currentY,
+            Vector2 targetPositionXz, Triangle? currentTriangle)
+        {
+            var height = terrain.GetGroundHeight(targetPositionXz);
+
+            // Dynamic snap distance: on slopes, the per-tick height change can far exceed
+            // GroundSnapDistance. Use the current slope angle to compute the expected height
+            // drop, so smooth downhill movement stays grounded while actual cliffs (where the
+            // current surface is flat) still trigger airborne.
+            float snapDistance = GroundSnapDistance;
+            if (height.HasValue && currentTriangle.HasValue)
+            {
+                float heightDifference = currentY - height.Value;
+                if (heightDifference > 0)
+                {
+                    float slopeRad = Triangle.GetSlopeAngle(currentTriangle.Value) * MathF.PI / 180f;
+                    float xzDist = (targetPositionXz - currentPositionXz).GetMagnitude();
+                    snapDistance = MathF.Max(GroundSnapDistance, xzDist * MathF.Tan(slopeRad) + GroundSnapDistance);
+                }
+            }
+
+            return new GroundContact(height, snapDistance);
+        }
+
+        private static (Vector3 position, bool isGrounded, float verticalVelocity) ComputeVerticalPosition(
+            Entity entity, Vector2 targetPositionXz, GroundContact ground, float deltaTime)
+        {
+            if (entity.IsGrounded)
+            {
+                if (!ground.Height.HasValue) return (Vector3.FromXz(targetPositionXz, entity.Position.Y), false, 0);
+                var heightDifference = entity.Position.Y - ground.Height.Value;
+                return heightDifference > ground.SnapDistance ?
+                    // Walking off a cliff - become airborne
+                    (Vector3.FromXz(targetPositionXz, entity.Position.Y), false, 0) :
+                    // Normal ground following
+                    (Vector3.FromXz(targetPositionXz, ground.Height.Value), true, 0);
+
+                // Off-mesh while grounded: become airborne at current height
+            }
+
+            // Airborne: apply gravity
+            var verticalVelocity = entity.VerticalVelocity + Gravity * deltaTime;
+            verticalVelocity = Math.Max(verticalVelocity, TerminalVelocity);
+            var newY = entity.Position.Y + verticalVelocity * deltaTime;
+
+            if (ground.Height.HasValue && newY <= ground.Height.Value)
+            {
+                // Landing
+                return (Vector3.FromXz(targetPositionXz, ground.Height.Value), true, 0);
+            }
+
+            return (Vector3.FromXz(targetPositionXz, newY), false, verticalVelocity);
+        }
+
         public static Entity[] Simulate(
             float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines)
         {
@@ -104,129 +226,27 @@ namespace SharedPhysics
                 var forwardDirection = Entity.GetForwardDirection(entity);
                 var normalizedDirection = entity.Direction.Normalized();
                 var isBackpedalling = Vector2.Dot(normalizedDirection, forwardDirection) < -0.01f;
-                var backpedalMultiplier = isBackpedalling ? 0.5f : 1f;
-                var surfaceSpeed = entity.Speed * backpedalMultiplier * deltaTime;
-
-                Vector2 targetMovement;
-                Triangle? currentTriangle = null;
-
-                if (terrain != null)
-                {
-                    currentTriangle = terrain.GetTriangle(entity.Position.ToXz());
-                    if (currentTriangle.HasValue && normalizedDirection.SqrMagnitude > 0.0001f)
-                    {
-                        targetMovement = ProjectMovementOntoSurface(
-                            normalizedDirection, surfaceSpeed, currentTriangle.Value, MaxSlopeAngle);
-                    }
-                    else
-                    {
-                        targetMovement = normalizedDirection * surfaceSpeed;
-                    }
-
-                    // Gravity-based slide on slopes exceeding max angle
-                    if (currentTriangle.HasValue && entity.IsGrounded &&
-                        Triangle.GetSlopeAngle(currentTriangle.Value) > MaxSlopeAngle)
-                    {
-                        var normal = Triangle.GetNormal(currentTriangle.Value);
-                        var down = new Vector3(0, -1, 0);
-                        var gravityOnSurface = down - normal * Vector3.Dot(down, normal);
-                        targetMovement = targetMovement +
-                            new Vector2(gravityOnSurface.X, gravityOnSurface.Z) * MathF.Abs(Gravity) * deltaTime;
-                    }
-                }
-                else
-                {
-                    targetMovement = normalizedDirection * surfaceSpeed;
-                }
+                var surfaceSpeed = entity.Speed * (isBackpedalling ? 0.5f : 1f) * deltaTime;
 
                 var currentPositionXz = entity.Position.ToXz();
-                var targetPositionXz = currentPositionXz + targetMovement;
-                var movementLine = new Line(currentPositionXz, targetPositionXz);
-                lineGrid.GetNearbyLines(BoundingBox.FromLine(movementLine), _nearbyLinesBuffer);
+                var currentTriangle = terrain?.GetTriangle(currentPositionXz);
 
-                foreach (var line in _nearbyLinesBuffer)
-                {
-                    var intersection = GetIntersection(movementLine, line);
-                    if (!intersection.HasValue) continue;
-                    var safeDistance = (intersection.Value - currentPositionXz).Normalized() * 0.05f;
-                    var safeMovement = intersection.Value - safeDistance - currentPositionXz;
-                    var safePosition = currentPositionXz + safeMovement;
-                    var remainingMovement = targetMovement - safeMovement;
-                    var glideMovement = Line.GlideAlong(line, remainingMovement);
-                    targetPositionXz = safePosition + glideMovement;
-                    movementLine = new Line(currentPositionXz, targetPositionXz);
-                }
+                var targetMovement = ComputeXzMovement(
+                    normalizedDirection, surfaceSpeed, currentTriangle, entity.IsGrounded, terrain != null, deltaTime);
+                var targetPositionXz = ApplyWallCollisions(
+                    currentPositionXz, currentPositionXz + targetMovement, lineGrid, _nearbyLinesBuffer);
 
                 processed[i] = entity;
                 processed[i].SequenceId = sequenceId;
 
                 if (terrain != null)
                 {
-                    var groundHeight = terrain.GetGroundHeight(targetPositionXz);
-
-                    if (entity.IsGrounded)
-                    {
-                        if (groundHeight.HasValue)
-                        {
-                            float heightDifference = entity.Position.Y - groundHeight.Value;
-
-                            // Dynamic snap distance: on slopes, the per-tick height
-                            // change can far exceed GroundSnapDistance. Use the current
-                            // slope angle to compute the expected height drop, so smooth
-                            // downhill movement stays grounded while actual cliffs
-                            // (where the current surface is flat) still trigger airborne.
-                            float snapDistance = GroundSnapDistance;
-                            if (currentTriangle.HasValue && heightDifference > 0)
-                            {
-                                float slopeRad = Triangle.GetSlopeAngle(currentTriangle.Value) * MathF.PI / 180f;
-                                float xzDist = (targetPositionXz - currentPositionXz).GetMagnitude();
-                                snapDistance = MathF.Max(GroundSnapDistance, xzDist * MathF.Tan(slopeRad) + GroundSnapDistance);
-                            }
-
-                            if (heightDifference > snapDistance)
-                            {
-                                // Walking off a cliff - become airborne
-                                processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
-                                processed[i].IsGrounded = false;
-                                processed[i].VerticalVelocity = 0;
-                            }
-                            else
-                            {
-                                // Normal ground following
-                                processed[i].Position = Vector3.FromXz(targetPositionXz, groundHeight.Value);
-                                processed[i].IsGrounded = true;
-                                processed[i].VerticalVelocity = 0;
-                            }
-                        }
-                        else
-                        {
-                            // Off-mesh while grounded: become airborne at current height
-                            processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
-                            processed[i].IsGrounded = false;
-                            processed[i].VerticalVelocity = 0;
-                        }
-                    }
-                    else
-                    {
-                        // Airborne: apply gravity
-                        var verticalVelocity = entity.VerticalVelocity + Gravity * deltaTime;
-                        verticalVelocity = Math.Max(verticalVelocity, TerminalVelocity);
-                        var newY = entity.Position.Y + verticalVelocity * deltaTime;
-
-                        if (groundHeight.HasValue && newY <= groundHeight.Value)
-                        {
-                            // Landing
-                            processed[i].Position = Vector3.FromXz(targetPositionXz, groundHeight.Value);
-                            processed[i].VerticalVelocity = 0;
-                            processed[i].IsGrounded = true;
-                        }
-                        else
-                        {
-                            processed[i].Position = Vector3.FromXz(targetPositionXz, newY);
-                            processed[i].VerticalVelocity = verticalVelocity;
-                            processed[i].IsGrounded = false;
-                        }
-                    }
+                    var ground = ResolveGroundContact(
+                        terrain, currentPositionXz, entity.Position.Y, targetPositionXz, currentTriangle);
+                    var (pos, grounded, vel) = ComputeVerticalPosition(entity, targetPositionXz, ground, deltaTime);
+                    processed[i].Position = pos;
+                    processed[i].IsGrounded = grounded;
+                    processed[i].VerticalVelocity = vel;
                 }
                 else
                 {

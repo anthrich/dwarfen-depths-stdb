@@ -8,7 +8,7 @@ namespace SharedPhysics
     {
         [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
         private const float Gravity = -19.62f;
-        public const float JumpImpulse = 16f;
+        public const float JumpImpulse = 8f;
         private const float MaxSlopeAngle = 60f;
         private const float GroundSnapDistance = 0.1f;
         private const float TerminalVelocity = -50f;

@@ -12,8 +12,8 @@ namespace SharedPhysics
         private readonly List<int>[] _cells;
         private readonly HashSet<int> _seenIndices = new();
 
-        public Line[] Lines => _lines;
-
+        public LineGrid() : this(Array.Empty<Line>()) { }
+        
         public LineGrid(Line[] lines, float cellSize = 10f)
         {
             _lines = lines;

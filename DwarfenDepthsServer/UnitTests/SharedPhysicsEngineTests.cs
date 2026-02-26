@@ -86,7 +86,7 @@ public class SharedPhysicsEngineTests
         const float deltaTime = 0.05f;
 
         // Act
-        var result = Engine.Simulate(deltaTime, 2, entities, []);
+        var result = Engine.Simulate(deltaTime, 2, entities, new LineGrid(), FlatTerrain());
 
         // Assert
         Assert.Equal(
@@ -117,7 +117,7 @@ public class SharedPhysicsEngineTests
         };
 
         // Act
-        var result = Engine.Simulate(1, 2, entities, []);
+        var result = Engine.Simulate(1, 2, entities, new LineGrid(), FlatTerrain());
 
         // Assert
         Assert.Equal(new Vector2 { X = 0.5f, Y = 1 }, result[0].Position.ToXz());
@@ -143,7 +143,7 @@ public class SharedPhysicsEngineTests
         };
 
         // Act
-        var result = Engine.Simulate(1, 2, entities, []);
+        var result = Engine.Simulate(1, 2, entities, new LineGrid(), FlatTerrain());
 
         // Assert
         Assert.Equal(new Vector2 { X = 1 + strafeDirection, Y = 1 }, result[0].Position.ToXz());
@@ -167,7 +167,7 @@ public class SharedPhysicsEngineTests
         };
 
         // Act
-        var result = Engine.Simulate(1, 2, entities, []);
+        var result = Engine.Simulate(1, 2, entities, new LineGrid(), FlatTerrain());
 
         // Assert
         Assert.Equal(new Vector2 { X = 0, Y = 1f }, result[0].Position.ToXz());
@@ -198,7 +198,7 @@ public class SharedPhysicsEngineTests
         const float deltaTime = 1f;
 
         // Act
-        var result = Engine.Simulate(deltaTime, 2, entities, lines);
+        var result = Engine.Simulate(deltaTime, 2, entities, new LineGrid(lines), FlatTerrain());
 
         // Assert
         Assert.Equal(
@@ -234,11 +234,11 @@ public class SharedPhysicsEngineTests
 
         const float deltaTime = 1f;
 
-        entities = Engine.Simulate(deltaTime, 2, entities, lines);
+        entities = Engine.Simulate(deltaTime, 2, entities, new LineGrid(lines), FlatTerrain());
         entities[0].Direction = new Vector2(1, 0);
 
         // Act
-        var result = Engine.Simulate(deltaTime, 2, entities, lines);
+        var result = Engine.Simulate(deltaTime, 2, entities, new LineGrid(lines), FlatTerrain());
 
         // Assert
         Assert.True(result[0].Position.X > 1, "X position should not be stuck in the wall");
@@ -276,7 +276,7 @@ public class SharedPhysicsEngineTests
         const float deltaTime = 0.05f;
 
         // Act
-        var result = Engine.Simulate(deltaTime, 2, entities, []);
+        var result = Engine.Simulate(deltaTime, 2, entities, new LineGrid(), FlatTerrain());
 
         // Assert
         Assert.NotEqual(0, result[0].Rotation);
@@ -301,7 +301,7 @@ public class SharedPhysicsEngineTests
             }
         };
 
-        var result = Engine.Simulate(1f, 1, entities, [], terrain);
+        var result = Engine.Simulate(1f, 1, entities, new LineGrid(), terrain);
 
         Assert.True(result[0].IsGrounded);
         Assert.Equal(0f, result[0].Position.Y, 0.01f);
@@ -344,8 +344,8 @@ public class SharedPhysicsEngineTests
             Direction = new Vector2(0, 1), Speed = 10f, IsGrounded = true
         };
 
-        var slopedResult = Engine.Simulate(1f, 1, new[] { slopedEntity }, [], slopedTerrain);
-        var flatResult = Engine.Simulate(1f, 1, new[] { flatEntity }, [], flatTerrain);
+        var slopedResult = Engine.Simulate(1f, 1, [slopedEntity], new LineGrid(), slopedTerrain);
+        var flatResult = Engine.Simulate(1f, 1, [flatEntity], new LineGrid(), flatTerrain);
 
         // On slope: horizontal distance should be less than on flat
         Assert.True(slopedResult[0].Position.Z < flatResult[0].Position.Z,
@@ -383,7 +383,7 @@ public class SharedPhysicsEngineTests
             Speed = 10f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, [], steepTerrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(), steepTerrain);
 
         // Entity should slide downhill (negative Z) despite trying to move uphill
         Assert.True(result[0].Position.Z < -0.1f,
@@ -417,7 +417,7 @@ public class SharedPhysicsEngineTests
             Speed = 10f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, [], steepTerrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(), steepTerrain);
 
         // Even with no input, entity should slide downhill
         Assert.True(result[0].Position.Z < -0.1f,
@@ -451,7 +451,7 @@ public class SharedPhysicsEngineTests
             Speed = 10f, Rotation = 0f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(), terrain);
 
         Assert.True(result[0].IsGrounded,
             $"Entity should stay grounded going downhill, but IsGrounded={result[0].IsGrounded}, Y={result[0].Position.Y}");
@@ -471,7 +471,7 @@ public class SharedPhysicsEngineTests
             IsGrounded = false, VerticalVelocity = 0f
         };
 
-        var result = Engine.Simulate(0.1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(0.1f, 1, [entity], new LineGrid(), terrain);
 
         Assert.False(result[0].IsGrounded);
         Assert.True(result[0].Position.Y < 5f, "Entity should have fallen");
@@ -490,7 +490,7 @@ public class SharedPhysicsEngineTests
             IsGrounded = false, VerticalVelocity = -5f
         };
 
-        var result = Engine.Simulate(0.1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(0.1f, 1, [entity], new LineGrid(), terrain);
 
         Assert.True(result[0].IsGrounded, "Entity should have landed");
         Assert.Equal(0f, result[0].Position.Y, 0.01f);
@@ -534,7 +534,7 @@ public class SharedPhysicsEngineTests
             Speed = 10f, Rotation = 90f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(), terrain);
 
         // Entity moved past the cliff edge. Ground at new position is Y=0, but entity was at Y=10.
         // The height difference (10) exceeds GroundSnapDistance (0.1), so entity should become airborne.
@@ -555,7 +555,7 @@ public class SharedPhysicsEngineTests
             VerticalVelocity = Engine.JumpImpulse
         };
 
-        var result = Engine.Simulate(0.1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(0.1f, 1, [entity], new LineGrid(), terrain);
 
         Assert.True(result[0].Position.Y > 0, "Entity should have moved upward");
         Assert.False(result[0].IsGrounded);
@@ -581,7 +581,7 @@ public class SharedPhysicsEngineTests
 
         for (int tick = 0; tick < 100; tick++)
         {
-            current = Engine.Simulate(0.05f, (ulong)tick, current, [], terrain);
+            current = Engine.Simulate(0.05f, (ulong)tick, current, new LineGrid(), terrain);
             if (current[0].Position.Y > 0.5f) wentUp = true;
             if (wentUp && current[0].IsGrounded)
             {
@@ -611,7 +611,7 @@ public class SharedPhysicsEngineTests
             Speed = 100f, Rotation = 90f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, lines, terrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(lines), terrain);
 
         Assert.True(result[0].Position.X < 5f, "Entity should be stopped by wall");
         Assert.True(result[0].IsGrounded);
@@ -637,7 +637,7 @@ public class SharedPhysicsEngineTests
             Speed = 100f, Rotation = 270f, IsGrounded = true
         };
 
-        var result = Engine.Simulate(1f, 1, new[] { entity }, [], terrain);
+        var result = Engine.Simulate(1f, 1, [entity], new LineGrid(), terrain);
 
         // Should become airborne since destination is off-mesh
         Assert.False(result[0].IsGrounded);
@@ -965,7 +965,7 @@ public class SharedPhysicsEngineTests
             }
         };
 
-        var result = Engine.Simulate(1f, 1, entities, Array.Empty<Line>(), hm);
+        var result = Engine.Simulate(1f, 1, entities, new LineGrid(), hm);
 
         Assert.True(result[0].IsGrounded);
         Assert.Equal(0f, result[0].Position.Y, 0.01f);
@@ -986,7 +986,7 @@ public class SharedPhysicsEngineTests
             }
         };
 
-        var result = Engine.Simulate(1f, 1, entities, Array.Empty<Line>(), hm);
+        var result = Engine.Simulate(1f, 1, entities, new LineGrid(), hm);
         Assert.False(result[0].IsGrounded);
     }
 }

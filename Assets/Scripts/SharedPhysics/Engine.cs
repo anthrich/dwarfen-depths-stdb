@@ -94,11 +94,8 @@ namespace SharedPhysics
 
         private static Vector2 ComputeXzMovement(
             Vector2 normalizedDirection, float surfaceSpeed,
-            Triangle? currentTriangle, bool isGrounded, bool hasTerrain, float deltaTime)
+            Triangle? currentTriangle, bool isGrounded, float deltaTime)
         {
-            if (!hasTerrain)
-                return normalizedDirection * surfaceSpeed;
-
             Vector2 targetMovement;
             if (currentTriangle.HasValue && normalizedDirection.SqrMagnitude > 0.0001f)
             {
@@ -203,19 +200,7 @@ namespace SharedPhysics
         }
 
         public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines)
-        {
-            return Simulate(deltaTime, sequenceId, entities, new LineGrid(lines), null);
-        }
-
-        public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, Line[] lines, ITerrain? terrain)
-        {
-            return Simulate(deltaTime, sequenceId, entities, new LineGrid(lines), terrain);
-        }
-
-        public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, ITerrain? terrain)
+            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, ITerrain terrain)
         {
             var processed = new Entity[entities.Length];
             var i = 0;
@@ -229,30 +214,22 @@ namespace SharedPhysics
                 var surfaceSpeed = entity.Speed * (isBackpedalling ? 0.5f : 1f) * deltaTime;
 
                 var currentPositionXz = entity.Position.ToXz();
-                var currentTriangle = terrain?.GetTriangle(currentPositionXz);
+                var currentTriangle = terrain.GetTriangle(currentPositionXz);
 
                 var targetMovement = ComputeXzMovement(
-                    normalizedDirection, surfaceSpeed, currentTriangle, entity.IsGrounded, terrain != null, deltaTime);
+                    normalizedDirection, surfaceSpeed, currentTriangle, entity.IsGrounded, deltaTime);
                 var targetPositionXz = ApplyWallCollisions(
                     currentPositionXz, currentPositionXz + targetMovement, lineGrid, _nearbyLinesBuffer);
 
                 processed[i] = entity;
                 processed[i].SequenceId = sequenceId;
 
-                if (terrain != null)
-                {
-                    var ground = ResolveGroundContact(
-                        terrain, currentPositionXz, entity.Position.Y, targetPositionXz, currentTriangle);
-                    var (pos, grounded, vel) = ComputeVerticalPosition(entity, targetPositionXz, ground, deltaTime);
-                    processed[i].Position = pos;
-                    processed[i].IsGrounded = grounded;
-                    processed[i].VerticalVelocity = vel;
-                }
-                else
-                {
-                    // Legacy 2D mode: position stays as Vector2-equivalent
-                    processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
-                }
+                var ground = ResolveGroundContact(
+                    terrain, currentPositionXz, entity.Position.Y, targetPositionXz, currentTriangle);
+                var (pos, grounded, vel) = ComputeVerticalPosition(entity, targetPositionXz, ground, deltaTime);
+                processed[i].Position = pos;
+                processed[i].IsGrounded = grounded;
+                processed[i].VerticalVelocity = vel;
 
                 i++;
             }

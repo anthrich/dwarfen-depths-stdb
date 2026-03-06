@@ -989,4 +989,49 @@ public class SharedPhysicsEngineTests
         var result = Engine.Simulate(1f, 1, entities, new LineGrid(), hm);
         Assert.False(result[0].IsGrounded);
     }
+
+    [Fact]
+    public void Airborne_entity_above_surface_passes_through_wall()
+    {
+        // Box top at Y=2, walls with SurfaceY=2.
+        // Entity is airborne at Y=3 (above SurfaceY), moving +X through the wall.
+        // The wall should not block because entityY >= SurfaceY.
+        // Highest-Y first, matching MapExporter sort order so FindTriangleIndex
+        // returns the box top for positions inside the box footprint.
+        var terrain = new TerrainGrid(new[]
+        {
+            // Box top at Y=2 (X:5-10, Z:0-10)
+            new Triangle(new Vector3(5, 2, 0), new Vector3(5, 2, 10), new Vector3(10, 2, 0)),
+            new Triangle(new Vector3(10, 2, 0), new Vector3(5, 2, 10), new Vector3(10, 2, 10)),
+            // Ground floor
+            new Triangle(new Vector3(-100, 0, -100), new Vector3(-100, 0, 100), new Vector3(100, 0, -100)),
+            new Triangle(new Vector3(100, 0, -100), new Vector3(-100, 0, 100), new Vector3(100, 0, 100)),
+        });
+
+        var lines = new Line[]
+        {
+            new(new Vector2(5, 0), new Vector2(5, 10), 2f),   // west face
+            new(new Vector2(10, 10), new Vector2(10, 0), 2f),  // east face
+            new(new Vector2(5, 0), new Vector2(10, 0), 2f),    // south face
+            new(new Vector2(10, 10), new Vector2(5, 10), 2f),  // north face
+        };
+
+        var entity = new Entity
+        {
+            Id = 1, Position = new Vector3(3, 3, 5),
+            Direction = new Vector2(1, 0), Speed = 10f,
+            Rotation = 90f, IsGrounded = false, VerticalVelocity = 0f
+        };
+
+        // Simulate enough ticks to cross the wall and land, but not walk off the far side.
+        // At speed=10, dt=0.05: ~0.5 units/tick. Entity lands around tick 6, east wall at X=10.
+        var current = new[] { entity };
+        for (int tick = 0; tick < 10; tick++)
+            current = Engine.Simulate(0.05f, (ulong)tick, current, new LineGrid(lines), terrain);
+
+        Assert.True(current[0].Position.X > 5f,
+            $"Entity should have passed through the wall (X={current[0].Position.X})");
+        Assert.Equal(2f, current[0].Position.Y, 0.1f);
+        Assert.True(current[0].IsGrounded, "Entity should have landed on the box top");
+    }
 }

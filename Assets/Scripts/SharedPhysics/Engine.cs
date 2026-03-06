@@ -122,7 +122,7 @@ namespace SharedPhysics
 
         private static Vector2 ApplyWallCollisions(
             Vector2 currentPositionXz, Vector2 targetPositionXz,
-            LineGrid lineGrid, List<Line> nearbyLinesBuffer)
+            LineGrid lineGrid, List<Line> nearbyLinesBuffer, float entityY)
         {
             var targetMovement = targetPositionXz - currentPositionXz;
             var movementLine = new Line(currentPositionXz, targetPositionXz);
@@ -130,6 +130,7 @@ namespace SharedPhysics
 
             foreach (var line in nearbyLinesBuffer)
             {
+                if (line.SurfaceY > 0 && entityY >= line.SurfaceY) continue;
                 var intersection = GetIntersection(movementLine, line);
                 if (!intersection.HasValue) continue;
                 var safeDistance = (intersection.Value - currentPositionXz).Normalized() * 0.05f;
@@ -219,7 +220,7 @@ namespace SharedPhysics
                 var targetMovement = ComputeXzMovement(
                     normalizedDirection, surfaceSpeed, currentTriangle, entity.IsGrounded, deltaTime);
                 var targetPositionXz = ApplyWallCollisions(
-                    currentPositionXz, currentPositionXz + targetMovement, lineGrid, _nearbyLinesBuffer);
+                    currentPositionXz, currentPositionXz + targetMovement, lineGrid, _nearbyLinesBuffer, entity.Position.Y);
 
                 processed[i] = entity;
                 processed[i].SequenceId = sequenceId;

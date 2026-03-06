@@ -195,15 +195,16 @@ public static class MapExporter
         progress.Report("Computing terrain boundary…");
         var terrainWalls = ComputeTerrainBoundary(raw.TerrainTris);
 
-        progress.Report("XZ-carving terrain under mesh objects…");
-        var carvedTerrain = XzCarveTerrain(raw.TerrainTris, raw.MeshTris);
-
         progress.Report("Computing mesh perimeters…");
         var meshWalls = ComputeMeshPerimeters(raw.MeshTris);
 
         progress.Report("Deduplicating triangles…");
-        var allTris = new List<Tri3>(carvedTerrain.Count + raw.MeshTris.Sum(l => l.Count));
-        foreach (var t in carvedTerrain)
+        // Terrain is NOT carved under mesh objects. The highest-Y-first sort below
+        // ensures FindTriangleIndex returns the uppermost surface, while the terrain
+        // underneath acts as a safety net for entities falling through gaps between
+        // adjacent mesh objects.
+        var allTris = new List<Tri3>(raw.TerrainTris.Count + raw.MeshTris.Sum(l => l.Count));
+        foreach (var t in raw.TerrainTris)
             allTris.Add(new Tri3 { V0 = t.V0, V1 = t.V1, V2 = t.V2 });
         foreach (var obj in raw.MeshTris)
             foreach (var t in obj)
@@ -258,31 +259,6 @@ public static class MapExporter
                 SurfaceY = 0f   // always block: map boundary
             });
         }
-        return result;
-    }
-
-    // Remove terrain triangles that are fully covered by mesh object triangles in XZ.
-    // A terrain triangle is only removed if ALL three of its vertices fall inside the
-    // mesh footprint. This avoids gaps at the boundary between terrain and mesh objects
-    // (the previous centroid-based check removed terrain triangles that extended beyond
-    // the mesh edge, leaving void strips where entities would fall through).
-    private static List<RawTri> XzCarveTerrain(List<RawTri> terrainTris, List<List<RawTri>> meshTrisPerObj)
-    {
-        var allMeshTris = meshTrisPerObj.SelectMany(l => l).ToList();
-        var result = new List<RawTri>(terrainTris.Count);
-
-        foreach (var tri in terrainTris)
-        {
-            var v0 = new Vector2(tri.V0.x, tri.V0.z);
-            var v1 = new Vector2(tri.V1.x, tri.V1.z);
-            var v2 = new Vector2(tri.V2.x, tri.V2.z);
-
-            bool allInside = allMeshTris.Any(m => TriContainsXz(m, v0))
-                          && allMeshTris.Any(m => TriContainsXz(m, v1))
-                          && allMeshTris.Any(m => TriContainsXz(m, v2));
-            if (!allInside) result.Add(tri);
-        }
-
         return result;
     }
 

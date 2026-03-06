@@ -1,251 +1,127 @@
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.SceneManagement;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
 
 public static class MapExporter
 {
-    private const float EdgeEpsilon = 0.01f;
+    // Minimum dot product with world-up for a face to be considered walkable.
+    private const float WalkableNormalThreshold = 0.5f;
     private static readonly string OutputDir = Path.Combine(Application.dataPath, "Scripts", "SharedPhysics");
 
-    [MenuItem("Tools/Export Map Data")]
-    public static void ExportMapData()
+    // ── Raw data gathered on the Unity main thread ───────────────────────────
+
+    private struct RawTri { public Vector3 V0, V1, V2; }
+
+    private struct RawSource
     {
-        var terrainMeshes = Object.FindObjectsByType<TerrainMesh>(FindObjectsSortMode.None);
+        public List<RawTri> TerrainTris;        // sampled from Unity Terrain
+        public List<List<RawTri>> MeshTris;     // per-object walkable (upward) tris
+        public Vector3 SpawnPos;
+        public string MapName;
+    }
+
+    // ── Processed output ─────────────────────────────────────────────────────
+
+    private struct WallLine { public Vector2 Start, End; public float SurfaceY; }
+    private struct Tri3 { public Vector3 V0, V1, V2; }
+
+    private struct ProcessedMap
+    {
+        public List<WallLine> Walls;
+        public List<Tri3> Tris;
+        public Vector3 SpawnPos;
+        public string MapName;
+    }
+
+    // ── Entry point ──────────────────────────────────────────────────────────
+
+    [MenuItem("Tools/Export Map Data")]
+    public static async void ExportMapData()
+    {
+        var raw = GatherRawSources();
+        if (raw == null) return;
+
+        EditorUtility.DisplayProgressBar("Exporting Map", "Processing geometry…", 0.2f);
+        var progress = new Progress<string>(msg =>
+            EditorUtility.DisplayProgressBar("Exporting Map", msg, 0.6f));
+
+        ProcessedMap result;
+        try
+        {
+            result = await Task.Run(() => ProcessGeometry(raw.Value, progress));
+        }
+        catch (Exception e)
+        {
+            EditorUtility.ClearProgressBar();
+            EditorUtility.DisplayDialog("Export Failed", e.Message, "OK");
+            return;
+        }
+
+        WriteFiles(result);
+        EditorUtility.ClearProgressBar();
+    }
+
+    // ── Main-thread data gathering ───────────────────────────────────────────
+
+    private static RawSource? GatherRawSources()
+    {
+        var terrainMeshes = UnityEngine.Object.FindObjectsByType<TerrainMesh>(FindObjectsSortMode.None);
         if (terrainMeshes.Length == 0)
         {
             EditorUtility.DisplayDialog("Export Failed", "No TerrainMesh components found in the scene.", "OK");
-            return;
+            return null;
         }
 
-        var spawnPoints = Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None);
+        var spawnPoints = UnityEngine.Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None);
         if (spawnPoints.Length == 0)
         {
             EditorUtility.DisplayDialog("Export Failed", "No SpawnPoint components found in the scene.", "OK");
-            return;
+            return null;
         }
 
-        var allEdges = new List<Edge2D>();
-        var allTriangles = new List<Triangle3D>();
-        HeightmapExportData? heightmapData = null;
-
-        foreach (var terrainMesh in terrainMeshes)
+        var raw = new RawSource
         {
-            var meshFilter = terrainMesh.GetComponent<MeshFilter>();
-            var unityTerrain = terrainMesh.GetComponent<Terrain>();
+            TerrainTris = new List<RawTri>(),
+            MeshTris = new List<List<RawTri>>(),
+            SpawnPos = spawnPoints[0].transform.position,
+            MapName = EditorSceneManager.GetActiveScene().name
+        };
 
-            if (meshFilter != null && meshFilter.sharedMesh != null)
+        foreach (var tm in terrainMeshes)
+        {
+            var terrain = tm.GetComponent<Terrain>();
+            var meshFilter = tm.GetComponent<MeshFilter>();
+
+            if (terrain != null && terrain.terrainData != null)
             {
-                // MeshFilter path: extract triangles and boundary edges from mesh
-                var mesh = meshFilter.sharedMesh;
-                var boundaryEdges = ExtractBoundaryEdges(mesh, terrainMesh.transform);
-                allEdges.AddRange(boundaryEdges);
-
-                var triangles = ExtractTriangles(mesh, terrainMesh.transform);
-                allTriangles.AddRange(triangles);
+                GatherTerrainTris(terrain, tm.resolution, raw.TerrainTris);
             }
-            else if (unityTerrain != null && unityTerrain.terrainData != null)
+            else if (meshFilter != null && meshFilter.sharedMesh != null)
             {
-                // Terrain path: extract heightmap data and boundary edges
-                heightmapData = ExtractHeightmap(unityTerrain, terrainMesh.resolution);
-                var boundaryEdges = ExtractHeightmapBoundaryEdges(heightmapData.Value);
-                allEdges.AddRange(boundaryEdges);
+                var walkable = GatherMeshWalkableTris(meshFilter.sharedMesh, tm.transform);
+                if (walkable.Count > 0)
+                    raw.MeshTris.Add(walkable);
+                else
+                    Debug.LogWarning($"TerrainMesh '{tm.name}': no walkable (upward-facing) faces found.");
             }
             else
             {
-                Debug.LogWarning($"TerrainMesh on '{terrainMesh.name}' has no MeshFilter or Terrain component. Skipping.");
+                Debug.LogWarning($"TerrainMesh '{tm.name}': no Terrain or MeshFilter component. Skipping.");
             }
         }
 
-        var deduplicatedEdges = DeduplicateSharedEdges(allEdges);
-        var deduplicatedTriangles = DeduplicateSharedTriangles(allTriangles);
-        Debug.Log($"Extracted {allEdges.Count} boundary edges, {deduplicatedEdges.Count} after deduplication.");
-
-        var spawnPos = spawnPoints[0].transform.position;
-        var mapName = EditorSceneManager.GetActiveScene().name;
-
-        // Write per-map file
-        var mapFilePath = Path.Combine(OutputDir, $"MapData.{mapName}.cs");
-        var mapCode = GenerateMapFile(mapName, deduplicatedEdges, deduplicatedTriangles, spawnPos, heightmapData);
-        File.WriteAllText(mapFilePath, mapCode);
-
-        // Regenerate index from all existing per-map files
-        var allMapNames = DiscoverMapNames();
-        var indexCode = GenerateIndexFile(allMapNames);
-        var indexFilePath = Path.Combine(OutputDir, "MapData.cs");
-        File.WriteAllText(indexFilePath, indexCode);
-
-        AssetDatabase.Refresh();
-
-        var statsMessage = heightmapData.HasValue
-            ? $"Exported map '{mapName}' ({deduplicatedEdges.Count} collision lines, heightmap {heightmapData.Value.Resolution}x{heightmapData.Value.Resolution})."
-            : $"Exported map '{mapName}' ({deduplicatedEdges.Count} collision lines, {deduplicatedTriangles.Count} triangles).";
-        EditorUtility.DisplayDialog("Export Complete", $"{statsMessage}\n{allMapNames.Count} total map(s) registered.", "OK");
+        return raw;
     }
 
-    private static List<string> DiscoverMapNames()
-    {
-        var mapNames = new List<string>();
-        foreach (var file in Directory.GetFiles(OutputDir, "MapData.*.cs"))
-        {
-            var fileName = Path.GetFileNameWithoutExtension(file);
-            // fileName is "MapData.{MapName}", extract the map name
-            var mapName = fileName.Substring("MapData.".Length);
-            mapNames.Add(mapName);
-        }
-        mapNames.Sort();
-        return mapNames;
-    }
-
-    private static string GenerateIndexFile(List<string> mapNames)
-    {
-        var code = new StringBuilder();
-        code.AppendLine("// Auto-generated by MapExporter. Do not edit.");
-        code.AppendLine("namespace SharedPhysics");
-        code.AppendLine("{");
-        code.AppendLine("    public static partial class MapData");
-        code.AppendLine("    {");
-
-        code.AppendLine("        public static MapDefinition GetMap(string name) => name switch");
-        code.AppendLine("        {");
-        foreach (var name in mapNames)
-        {
-            code.AppendLine($"            \"{name}\" => {name},");
-        }
-        code.AppendLine("            _ => throw new System.ArgumentException($\"Unknown map: {name}\")");
-        code.AppendLine("        };");
-        code.AppendLine();
-
-        // Helper methods for converting flat float arrays to Line[]/Triangle[]
-        code.AppendLine("        private static Line[] BuildLines(float[] data)");
-        code.AppendLine("        {");
-        code.AppendLine("            var result = new Line[data.Length / 4];");
-        code.AppendLine("            for (int i = 0; i < result.Length; i++)");
-        code.AppendLine("            {");
-        code.AppendLine("                int j = i * 4;");
-        code.AppendLine("                result[i] = new Line(new Vector2(data[j], data[j + 1]), new Vector2(data[j + 2], data[j + 3]));");
-        code.AppendLine("            }");
-        code.AppendLine("            return result;");
-        code.AppendLine("        }");
-        code.AppendLine();
-        code.AppendLine("        private static Triangle[] BuildTriangles(float[] data)");
-        code.AppendLine("        {");
-        code.AppendLine("            var result = new Triangle[data.Length / 9];");
-        code.AppendLine("            for (int i = 0; i < result.Length; i++)");
-        code.AppendLine("            {");
-        code.AppendLine("                int j = i * 9;");
-        code.AppendLine("                result[i] = new Triangle(");
-        code.AppendLine("                    new Vector3(data[j], data[j + 1], data[j + 2]),");
-        code.AppendLine("                    new Vector3(data[j + 3], data[j + 4], data[j + 5]),");
-        code.AppendLine("                    new Vector3(data[j + 6], data[j + 7], data[j + 8]));");
-        code.AppendLine("            }");
-        code.AppendLine("            return result;");
-        code.AppendLine("        }");
-
-        code.AppendLine("    }");
-        code.AppendLine("}");
-
-        return code.ToString();
-    }
-
-    private static string GenerateMapFile(string mapName, List<Edge2D> lines, List<Triangle3D> triangles,
-        Vector3 spawnPosition, HeightmapExportData? heightmap)
-    {
-        var code = new StringBuilder();
-        code.AppendLine("// Auto-generated by MapExporter. Do not edit.");
-        code.AppendLine("namespace SharedPhysics");
-        code.AppendLine("{");
-        code.AppendLine("    public static partial class MapData");
-        code.AppendLine("    {");
-
-        // Line data as flat float array (4 floats per line: startX, startY, endX, endY)
-        // Float arrays use RuntimeHelpers.InitializeArray (binary blob copy), avoiding large IL methods.
-        code.AppendLine($"        private static readonly float[] _{mapName}LineData = new float[]");
-        code.AppendLine("        {");
-        for (int i = 0; i < lines.Count; i++)
-        {
-            var line = lines[i];
-            code.AppendLine($"            {F(line.Start.x)},{F(line.Start.y)},{F(line.End.x)},{F(line.End.y)},");
-        }
-        code.AppendLine("        };");
-        code.AppendLine();
-
-        if (heightmap.HasValue)
-        {
-            var hm = heightmap.Value;
-
-            // Heightmap data as flat float array (row-major: heights[z * resolution + x])
-            code.AppendLine($"        private static readonly float[] _{mapName}HeightmapData = new float[]");
-            code.AppendLine("        {");
-            for (int z = 0; z < hm.Resolution; z++)
-            {
-                var sb = new StringBuilder("            ");
-                for (int x = 0; x < hm.Resolution; x++)
-                {
-                    sb.Append(F(hm.Heights[z * hm.Resolution + x]));
-                    sb.Append(',');
-                }
-                code.AppendLine(sb.ToString());
-            }
-            code.AppendLine("        };");
-            code.AppendLine();
-
-            // Lazy map definition using heightmap constructor
-            code.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{mapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
-            code.AppendLine($"            \"{mapName}\",");
-            code.AppendLine($"            BuildLines(_{mapName}LineData),");
-            code.AppendLine($"            new Vector3({F(spawnPosition.x)}, {F(spawnPosition.y)}, {F(spawnPosition.z)}),");
-            code.AppendLine($"            _{mapName}HeightmapData,");
-            code.AppendLine($"            {hm.Resolution},");
-            code.AppendLine($"            {F(hm.OriginX)},");
-            code.AppendLine($"            {F(hm.OriginZ)},");
-            code.AppendLine($"            {F(hm.SizeX)},");
-            code.AppendLine($"            {F(hm.SizeZ)}");
-            code.AppendLine("        ));");
-        }
-        else
-        {
-            // Triangle data as flat float array (9 floats per tri: v0x,v0y,v0z, v1x,v1y,v1z, v2x,v2y,v2z)
-            code.AppendLine($"        private static readonly float[] _{mapName}TriangleData = new float[]");
-            code.AppendLine("        {");
-            for (int i = 0; i < triangles.Count; i++)
-            {
-                var tri = triangles[i];
-                code.AppendLine($"            {F(tri.V0.x)},{F(tri.V0.y)},{F(tri.V0.z)},{F(tri.V1.x)},{F(tri.V1.y)},{F(tri.V1.z)},{F(tri.V2.x)},{F(tri.V2.y)},{F(tri.V2.z)},");
-            }
-            code.AppendLine("        };");
-            code.AppendLine();
-
-            // Lazy map definition using triangle constructor
-            code.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{mapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
-            code.AppendLine($"            \"{mapName}\",");
-            code.AppendLine($"            BuildLines(_{mapName}LineData),");
-            code.AppendLine($"            BuildTriangles(_{mapName}TriangleData),");
-            code.AppendLine($"            new Vector3({F(spawnPosition.x)}, {F(spawnPosition.y)}, {F(spawnPosition.z)})");
-            code.AppendLine("        ));");
-        }
-
-        code.AppendLine($"        public static MapDefinition {mapName} => _{mapName}Lazy.Value;");
-
-        code.AppendLine("    }");
-        code.AppendLine("}");
-
-        return code.ToString();
-    }
-
-    private struct HeightmapExportData
-    {
-        public float[] Heights;
-        public int Resolution;
-        public float OriginX, OriginZ;
-        public float SizeX, SizeZ;
-    }
-
-    private static HeightmapExportData ExtractHeightmap(Terrain terrain, int resolution)
+    // Samples Unity Terrain into a triangulated mesh matching Heightmap.cs quad split.
+    private static void GatherTerrainTris(Terrain terrain, int resolution, List<RawTri> result)
     {
         var data = terrain.terrainData;
         var hmRes = data.heightmapResolution;
@@ -257,253 +133,382 @@ public static class MapExporter
         int actualRes = (hmRes - 1) / step + 1;
 
         var unityHeights = data.GetHeights(0, 0, hmRes, hmRes);
-        var heights = new float[actualRes * actualRes];
+        float cellX = size.x / (actualRes - 1);
+        float cellZ = size.z / (actualRes - 1);
 
+        var verts = new Vector3[actualRes * actualRes];
         for (int z = 0; z < actualRes; z++)
         {
             for (int x = 0; x < actualRes; x++)
             {
                 int hmX = Mathf.Min(x * step, hmRes - 1);
                 int hmZ = Mathf.Min(z * step, hmRes - 1);
-                heights[z * actualRes + x] = unityHeights[hmZ, hmX] * size.y + pos.y;
+                float worldY = unityHeights[hmZ, hmX] * size.y + pos.y;
+                verts[z * actualRes + x] = new Vector3(pos.x + x * cellX, worldY, pos.z + z * cellZ);
             }
         }
 
-        Debug.Log($"Extracted heightmap from Terrain '{terrain.name}': {actualRes}x{actualRes} grid, {heights.Length} heights");
-
-        return new HeightmapExportData
+        // Diagonal split: topLeft–bottomLeft–topRight (fx+fz≤1) and topRight–bottomLeft–bottomRight (fx+fz>1).
+        // Matches Heightmap.cs so runtime queries are consistent.
+        for (int gz = 0; gz < actualRes - 1; gz++)
         {
-            Heights = heights,
-            Resolution = actualRes,
-            OriginX = pos.x,
-            OriginZ = pos.z,
-            SizeX = size.x,
-            SizeZ = size.z
+            for (int gx = 0; gx < actualRes - 1; gx++)
+            {
+                var topLeft     = verts[gz * actualRes + gx];
+                var bottomLeft  = verts[(gz + 1) * actualRes + gx];
+                var topRight    = verts[gz * actualRes + gx + 1];
+                var bottomRight = verts[(gz + 1) * actualRes + gx + 1];
+
+                result.Add(new RawTri { V0 = topLeft,  V1 = bottomLeft, V2 = topRight });
+                result.Add(new RawTri { V0 = topRight, V1 = bottomLeft, V2 = bottomRight });
+            }
+        }
+
+        Debug.Log($"Gathered {(actualRes - 1) * (actualRes - 1) * 2} terrain triangles from '{terrain.name}' at {actualRes}x{actualRes}.");
+    }
+
+    // Extracts only upward-facing (walkable) triangles from a mesh object.
+    private static List<RawTri> GatherMeshWalkableTris(Mesh mesh, Transform transform)
+    {
+        var tris = mesh.triangles;
+        var verts = mesh.vertices;
+        var result = new List<RawTri>();
+
+        for (int i = 0; i < tris.Length; i += 3)
+        {
+            var v0 = transform.TransformPoint(verts[tris[i]]);
+            var v1 = transform.TransformPoint(verts[tris[i + 1]]);
+            var v2 = transform.TransformPoint(verts[tris[i + 2]]);
+
+            var faceNormal = Vector3.Cross(v1 - v0, v2 - v0).normalized;
+            if (faceNormal.y > WalkableNormalThreshold)
+                result.Add(new RawTri { V0 = v0, V1 = v1, V2 = v2 });
+        }
+
+        return result;
+    }
+
+    // ── Background geometry processing ───────────────────────────────────────
+
+    private static ProcessedMap ProcessGeometry(RawSource raw, IProgress<string> progress)
+    {
+        progress.Report("Computing terrain boundary…");
+        var terrainWalls = ComputeTerrainBoundary(raw.TerrainTris);
+
+        progress.Report("XZ-carving terrain under mesh objects…");
+        var carvedTerrain = XzCarveTerrain(raw.TerrainTris, raw.MeshTris);
+
+        progress.Report("Computing mesh perimeters…");
+        var meshWalls = ComputeMeshPerimeters(raw.MeshTris);
+
+        progress.Report("Deduplicating triangles…");
+        var allTris = new List<Tri3>(carvedTerrain.Count + raw.MeshTris.Sum(l => l.Count));
+        foreach (var t in carvedTerrain)
+            allTris.Add(new Tri3 { V0 = t.V0, V1 = t.V1, V2 = t.V2 });
+        foreach (var obj in raw.MeshTris)
+            foreach (var t in obj)
+                allTris.Add(new Tri3 { V0 = t.V0, V1 = t.V1, V2 = t.V2 });
+        var dedupedTris = DeduplicateTris(allTris);
+        // Sort highest-Y centroid first so TerrainGrid's first-match returns the
+        // uppermost walkable surface when multiple surfaces share an XZ footprint
+        // (e.g. a box top at Y=3 sitting above a floor at Y=0).
+        dedupedTris.Sort((x, y) =>
+        {
+            float xc = (x.V0.y + x.V1.y + x.V2.y) / 3f;
+            float yc = (y.V0.y + y.V1.y + y.V2.y) / 3f;
+            return yc.CompareTo(xc); // descending
+        });
+
+        var allWalls = new List<WallLine>(terrainWalls.Count + meshWalls.Count);
+        allWalls.AddRange(terrainWalls);
+        allWalls.AddRange(meshWalls);
+
+        return new ProcessedMap
+        {
+            Walls = allWalls,
+            Tris = dedupedTris,
+            SpawnPos = raw.SpawnPos,
+            MapName = raw.MapName
         };
     }
 
-    private static List<Edge2D> ExtractHeightmapBoundaryEdges(HeightmapExportData hm)
+    // Perimeter edges of ALL terrain triangles (before XZ carving) = map boundary.
+    // SurfaceY = float.MaxValue so they always block.
+    private static List<WallLine> ComputeTerrainBoundary(List<RawTri> terrainTris)
     {
-        var edges = new List<Edge2D>();
-        float cellX = hm.SizeX / (hm.Resolution - 1);
-        float cellZ = hm.SizeZ / (hm.Resolution - 1);
+        var counts = new Dictionary<(long, long), int>();
+        var edgeVerts = new Dictionary<(long, long), (Vector3, Vector3)>();
 
-        for (int i = 0; i < hm.Resolution - 1; i++)
+        foreach (var tri in terrainTris)
         {
-            float x0 = hm.OriginX + i * cellX;
-            float x1 = hm.OriginX + (i + 1) * cellX;
-
-            // Top edge (z = originZ)
-            edges.Add(new Edge2D(new Vector2(x0, hm.OriginZ), new Vector2(x1, hm.OriginZ)));
-            // Bottom edge (z = originZ + sizeZ)
-            edges.Add(new Edge2D(
-                new Vector2(x0, hm.OriginZ + hm.SizeZ),
-                new Vector2(x1, hm.OriginZ + hm.SizeZ)));
+            AccumulateEdge(counts, edgeVerts, tri.V0, tri.V1);
+            AccumulateEdge(counts, edgeVerts, tri.V1, tri.V2);
+            AccumulateEdge(counts, edgeVerts, tri.V2, tri.V0);
         }
 
-        for (int i = 0; i < hm.Resolution - 1; i++)
+        var result = new List<WallLine>();
+        foreach (var (key, count) in counts)
         {
-            float z0 = hm.OriginZ + i * cellZ;
-            float z1 = hm.OriginZ + (i + 1) * cellZ;
-
-            // Left edge (x = originX)
-            edges.Add(new Edge2D(new Vector2(hm.OriginX, z0), new Vector2(hm.OriginX, z1)));
-            // Right edge (x = originX + sizeX)
-            edges.Add(new Edge2D(
-                new Vector2(hm.OriginX + hm.SizeX, z0),
-                new Vector2(hm.OriginX + hm.SizeX, z1)));
+            if (count != 1) continue;
+            var (a, b) = edgeVerts[key];
+            result.Add(new WallLine
+            {
+                Start = new Vector2(a.x, a.z),
+                End = new Vector2(b.x, b.z),
+                SurfaceY = 0f   // always block: map boundary
+            });
         }
-
-        return edges;
+        return result;
     }
 
-    private static List<Triangle3D> ExtractTriangles(Mesh mesh, Transform transform)
+    // Remove terrain triangles that are fully covered by mesh object triangles in XZ.
+    // A terrain triangle is only removed if ALL three of its vertices fall inside the
+    // mesh footprint. This avoids gaps at the boundary between terrain and mesh objects
+    // (the previous centroid-based check removed terrain triangles that extended beyond
+    // the mesh edge, leaving void strips where entities would fall through).
+    private static List<RawTri> XzCarveTerrain(List<RawTri> terrainTris, List<List<RawTri>> meshTrisPerObj)
     {
-        var triangles = mesh.triangles;
-        var vertices = mesh.vertices;
-        var result = new List<Triangle3D>();
+        var allMeshTris = meshTrisPerObj.SelectMany(l => l).ToList();
+        var result = new List<RawTri>(terrainTris.Count);
 
-        for (int i = 0; i < triangles.Length; i += 3)
+        foreach (var tri in terrainTris)
         {
-            var worldV0 = transform.TransformPoint(vertices[triangles[i]]);
-            var worldV1 = transform.TransformPoint(vertices[triangles[i + 1]]);
-            var worldV2 = transform.TransformPoint(vertices[triangles[i + 2]]);
+            var v0 = new Vector2(tri.V0.x, tri.V0.z);
+            var v1 = new Vector2(tri.V1.x, tri.V1.z);
+            var v2 = new Vector2(tri.V2.x, tri.V2.z);
 
-            result.Add(new Triangle3D(worldV0, worldV1, worldV2));
+            bool allInside = allMeshTris.Any(m => TriContainsXz(m, v0))
+                          && allMeshTris.Any(m => TriContainsXz(m, v1))
+                          && allMeshTris.Any(m => TriContainsXz(m, v2));
+            if (!allInside) result.Add(tri);
         }
 
         return result;
     }
 
-    private static List<Edge2D> ExtractBoundaryEdges(Mesh mesh, Transform transform)
+    // Perimeter of the combined walkable top-faces across all mesh objects.
+    // Edges shared between two adjacent mesh objects cancel out (interior edges).
+    // SurfaceY = max Y of the edge's two world-space endpoints.
+    private static List<WallLine> ComputeMeshPerimeters(List<List<RawTri>> meshTrisPerObj)
     {
-        var triangles = mesh.triangles;
-        var vertices = mesh.vertices;
-        var edgeCounts = new Dictionary<(int, int), int>();
+        var counts = new Dictionary<(long, long), int>();
+        var edgeVerts = new Dictionary<(long, long), (Vector3, Vector3)>();
 
-        for (int i = 0; i < triangles.Length; i += 3)
+        foreach (var obj in meshTrisPerObj)
         {
-            var v0 = triangles[i];
-            var v1 = triangles[i + 1];
-            var v2 = triangles[i + 2];
-
-            CountEdge(edgeCounts, v0, v1);
-            CountEdge(edgeCounts, v1, v2);
-            CountEdge(edgeCounts, v2, v0);
-        }
-
-        var boundaryEdges = new List<Edge2D>();
-        foreach (var kvp in edgeCounts)
-        {
-            if (kvp.Value != 1) continue;
-
-            var worldA = transform.TransformPoint(vertices[kvp.Key.Item1]);
-            var worldB = transform.TransformPoint(vertices[kvp.Key.Item2]);
-
-            boundaryEdges.Add(new Edge2D(
-                new Vector2(worldA.x, worldA.z),
-                new Vector2(worldB.x, worldB.z)
-            ));
-        }
-
-        return boundaryEdges;
-    }
-
-    private static void CountEdge(Dictionary<(int, int), int> edgeCounts, int a, int b)
-    {
-        var key = a < b ? (a, b) : (b, a);
-        edgeCounts.TryGetValue(key, out var count);
-        edgeCounts[key] = count + 1;
-    }
-
-    private static List<Edge2D> DeduplicateSharedEdges(List<Edge2D> edges)
-    {
-        var result = new List<Edge2D>();
-        var removed = new bool[edges.Count];
-
-        for (int i = 0; i < edges.Count; i++)
-        {
-            if (removed[i]) continue;
-
-            bool isDuplicate = false;
-            for (int j = i + 1; j < edges.Count; j++)
+            foreach (var tri in obj)
             {
-                if (removed[j]) continue;
-                if (!EdgesMatch(edges[i], edges[j])) continue;
-
-                removed[i] = true;
-                removed[j] = true;
-                isDuplicate = true;
-                break;
-            }
-
-            if (!isDuplicate)
-            {
-                result.Add(edges[i]);
+                AccumulateEdge(counts, edgeVerts, tri.V0, tri.V1);
+                AccumulateEdge(counts, edgeVerts, tri.V1, tri.V2);
+                AccumulateEdge(counts, edgeVerts, tri.V2, tri.V0);
             }
         }
 
+        var result = new List<WallLine>();
+        foreach (var (key, count) in counts)
+        {
+            if (count != 1) continue;
+            var (a, b) = edgeVerts[key];
+            float edgeMaxY = Mathf.Max(a.y, b.y);
+            result.Add(new WallLine
+            {
+                Start = new Vector2(a.x, a.z),
+                End = new Vector2(b.x, b.z),
+                // Snap near-zero values to 0 (always-block). Float noise on ground-level
+                // mesh vertices (~4.7e-7) would otherwise make dungeon walls permeable.
+                SurfaceY = edgeMaxY > 0.1f ? edgeMaxY : 0f
+            });
+        }
         return result;
     }
 
-    private static List<Triangle3D> DeduplicateSharedTriangles(List<Triangle3D> triangles)
+    // ── Geometry helpers ──────────────────────────────────────────────────────
+
+    // Accumulates an edge (A,B) into a canonical shared-edge count dictionary.
+    private static void AccumulateEdge(
+        Dictionary<(long, long), int> counts,
+        Dictionary<(long, long), (Vector3, Vector3)> data,
+        Vector3 a, Vector3 b)
     {
-        var result = new List<Triangle3D>();
-        var removed = new bool[triangles.Count];
+        long ka = PackVert(a);
+        long kb = PackVert(b);
+        var key = ka <= kb ? (ka, kb) : (kb, ka);
 
-        for (int i = 0; i < triangles.Count; i++)
+        if (!counts.ContainsKey(key))
         {
-            if (removed[i]) continue;
-
-            bool isDuplicate = false;
-            for (int j = i + 1; j < triangles.Count; j++)
-            {
-                if (removed[j]) continue;
-                if (!TrianglesMatch(triangles[i], triangles[j])) continue;
-
-                removed[i] = true;
-                removed[j] = true;
-                isDuplicate = true;
-                break;
-            }
-
-            if (!isDuplicate)
-            {
-                result.Add(triangles[i]);
-            }
+            counts[key] = 0;
+            data[key] = (a, b);
         }
+        counts[key]++;
+    }
 
+    // Pack a world-space vertex into a single long for edge/triangle dedup.
+    // Quantises to ~0.01 world units; supports coords in ±1,000,000 range.
+    private static long PackVert(Vector3 v)
+    {
+        long x = (long)Math.Round(v.x * 100) & 0xFFFFF;
+        long y = (long)Math.Round(v.y * 100) & 0xFFFFF;
+        long z = (long)Math.Round(v.z * 100) & 0xFFFFF;
+        return x | (y << 20) | (z << 40);
+    }
+
+    // Test whether XZ point is inside a triangle projected onto the XZ plane.
+    private static bool TriContainsXz(RawTri tri, Vector2 p)
+    {
+        float d1 = XzSign(p, new Vector2(tri.V0.x, tri.V0.z), new Vector2(tri.V1.x, tri.V1.z));
+        float d2 = XzSign(p, new Vector2(tri.V1.x, tri.V1.z), new Vector2(tri.V2.x, tri.V2.z));
+        float d3 = XzSign(p, new Vector2(tri.V2.x, tri.V2.z), new Vector2(tri.V0.x, tri.V0.z));
+        bool hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
+        bool hasPos = d1 > 0 || d2 > 0 || d3 > 0;
+        return !(hasNeg && hasPos);
+    }
+
+    private static float XzSign(Vector2 p, Vector2 a, Vector2 b) =>
+        (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+
+    // O(n) triangle deduplication via canonical packed-vertex hash.
+    private static List<Tri3> DeduplicateTris(List<Tri3> tris)
+    {
+        var seen = new HashSet<(long, long, long)>();
+        var result = new List<Tri3>(tris.Count);
+        foreach (var tri in tris)
+        {
+            var key = CanonicalTriKey(tri);
+            if (seen.Add(key)) result.Add(tri);
+        }
         return result;
     }
 
-    private static bool TrianglesMatch(Triangle3D a, Triangle3D b)
+    private static (long, long, long) CanonicalTriKey(Tri3 tri)
     {
-        var aVerts = new[] { a.V0, a.V1, a.V2 };
-        var bVerts = new[] { b.V0, b.V1, b.V2 };
+        var k0 = PackVert(tri.V0);
+        var k1 = PackVert(tri.V1);
+        var k2 = PackVert(tri.V2);
+        // Sort three keys (3-element sort network)
+        if (k0 > k1) (k0, k1) = (k1, k0);
+        if (k1 > k2) (k1, k2) = (k2, k1);
+        if (k0 > k1) (k0, k1) = (k1, k0);
+        return (k0, k1, k2);
+    }
 
-        // Check if all vertices of a match some vertex in b
-        foreach (var av in aVerts)
+    // ── File writing ─────────────────────────────────────────────────────────
+
+    private static void WriteFiles(ProcessedMap result)
+    {
+        var mapFilePath = Path.Combine(OutputDir, $"MapData.{result.MapName}.cs");
+        File.WriteAllText(mapFilePath, GenerateMapFile(result));
+
+        var allMapNames = DiscoverMapNames();
+        File.WriteAllText(Path.Combine(OutputDir, "MapData.cs"), GenerateIndexFile(allMapNames));
+
+        AssetDatabase.Refresh();
+
+        EditorUtility.DisplayDialog("Export Complete",
+            $"Exported '{result.MapName}': {result.Walls.Count} collision lines, {result.Tris.Count} triangles.\n" +
+            $"{allMapNames.Count} total map(s) registered.", "OK");
+    }
+
+    private static List<string> DiscoverMapNames()
+    {
+        var names = new List<string>();
+        foreach (var file in Directory.GetFiles(OutputDir, "MapData.*.cs"))
         {
-            bool found = false;
-            foreach (var bv in bVerts)
-            {
-                if (ApproxEqual3D(av, bv))
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return false;
+            var baseName = Path.GetFileNameWithoutExtension(file);
+            names.Add(baseName.Substring("MapData.".Length));
         }
-        return true;
+        names.Sort();
+        return names;
     }
 
-    private static bool EdgesMatch(Edge2D a, Edge2D b)
+    private static string GenerateMapFile(ProcessedMap map)
     {
-        return (ApproxEqual(a.Start, b.Start) && ApproxEqual(a.End, b.End)) ||
-               (ApproxEqual(a.Start, b.End) && ApproxEqual(a.End, b.Start));
-    }
+        var sb = new StringBuilder();
+        sb.AppendLine("// Auto-generated by MapExporter. Do not edit.");
+        sb.AppendLine("namespace SharedPhysics");
+        sb.AppendLine("{");
+        sb.AppendLine("    public static partial class MapData");
+        sb.AppendLine("    {");
 
-    private static bool ApproxEqual(Vector2 a, Vector2 b)
-    {
-        return Mathf.Abs(a.x - b.x) < EdgeEpsilon && Mathf.Abs(a.y - b.y) < EdgeEpsilon;
-    }
+        // Line data: 5 floats per line (startX, startZ, endX, endZ, surfaceY)
+        sb.AppendLine($"        private static readonly float[] _{map.MapName}LineData = new float[]");
+        sb.AppendLine("        {");
+        foreach (var w in map.Walls)
+            sb.AppendLine($"            {F(w.Start.x)},{F(w.Start.y)},{F(w.End.x)},{F(w.End.y)},{F(w.SurfaceY)},");
+        sb.AppendLine("        };");
+        sb.AppendLine();
 
-    private static bool ApproxEqual3D(Vector3 a, Vector3 b)
-    {
-        return Mathf.Abs(a.x - b.x) < EdgeEpsilon &&
-               Mathf.Abs(a.y - b.y) < EdgeEpsilon &&
-               Mathf.Abs(a.z - b.z) < EdgeEpsilon;
-    }
-
-    private static string F(float value)
-    {
-        return value.ToString("G", CultureInfo.InvariantCulture) + "f";
-    }
-
-    private struct Edge2D
-    {
-        public Vector2 Start;
-        public Vector2 End;
-
-        public Edge2D(Vector2 start, Vector2 end)
+        // Triangle data: 9 floats per triangle
+        sb.AppendLine($"        private static readonly float[] _{map.MapName}TriangleData = new float[]");
+        sb.AppendLine("        {");
+        foreach (var t in map.Tris)
         {
-            Start = start;
-            End = end;
+            sb.AppendLine($"            {F(t.V0.x)},{F(t.V0.y)},{F(t.V0.z)},{F(t.V1.x)},{F(t.V1.y)},{F(t.V1.z)},{F(t.V2.x)},{F(t.V2.y)},{F(t.V2.z)},");
         }
+        sb.AppendLine("        };");
+        sb.AppendLine();
+
+        sb.AppendLine($"        private static readonly System.Lazy<MapDefinition> _{map.MapName}Lazy = new System.Lazy<MapDefinition>(() => new MapDefinition(");
+        sb.AppendLine($"            \"{map.MapName}\",");
+        sb.AppendLine($"            BuildLines(_{map.MapName}LineData),");
+        sb.AppendLine($"            BuildTriangles(_{map.MapName}TriangleData),");
+        sb.AppendLine($"            new Vector3({F(map.SpawnPos.x)}, {F(map.SpawnPos.y)}, {F(map.SpawnPos.z)})");
+        sb.AppendLine("        ));");
+        sb.AppendLine($"        public static MapDefinition {map.MapName} => _{map.MapName}Lazy.Value;");
+
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+        return sb.ToString();
     }
 
-    private struct Triangle3D
+    private static string GenerateIndexFile(List<string> mapNames)
     {
-        public Vector3 V0;
-        public Vector3 V1;
-        public Vector3 V2;
+        var sb = new StringBuilder();
+        sb.AppendLine("// Auto-generated by MapExporter. Do not edit.");
+        sb.AppendLine("namespace SharedPhysics");
+        sb.AppendLine("{");
+        sb.AppendLine("    public static partial class MapData");
+        sb.AppendLine("    {");
 
-        public Triangle3D(Vector3 v0, Vector3 v1, Vector3 v2)
-        {
-            V0 = v0;
-            V1 = v1;
-            V2 = v2;
-        }
+        sb.AppendLine("        public static MapDefinition GetMap(string name) => name switch");
+        sb.AppendLine("        {");
+        foreach (var name in mapNames)
+            sb.AppendLine($"            \"{name}\" => {name},");
+        sb.AppendLine("            _ => throw new System.ArgumentException($\"Unknown map: {name}\")");
+        sb.AppendLine("        };");
+        sb.AppendLine();
+
+        // 5-float line format: startX, startZ, endX, endZ, surfaceY
+        sb.AppendLine("        private static Line[] BuildLines(float[] data)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var result = new Line[data.Length / 5];");
+        sb.AppendLine("            for (int i = 0; i < result.Length; i++)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                int j = i * 5;");
+        sb.AppendLine("                result[i] = new Line(new Vector2(data[j], data[j + 1]), new Vector2(data[j + 2], data[j + 3]), data[j + 4]);");
+        sb.AppendLine("            }");
+        sb.AppendLine("            return result;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+
+        sb.AppendLine("        private static Triangle[] BuildTriangles(float[] data)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            var result = new Triangle[data.Length / 9];");
+        sb.AppendLine("            for (int i = 0; i < result.Length; i++)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                int j = i * 9;");
+        sb.AppendLine("                result[i] = new Triangle(");
+        sb.AppendLine("                    new Vector3(data[j], data[j + 1], data[j + 2]),");
+        sb.AppendLine("                    new Vector3(data[j + 3], data[j + 4], data[j + 5]),");
+        sb.AppendLine("                    new Vector3(data[j + 6], data[j + 7], data[j + 8]));");
+        sb.AppendLine("            }");
+        sb.AppendLine("            return result;");
+        sb.AppendLine("        }");
+
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+        return sb.ToString();
     }
+
+    private static string F(float value) =>
+        value.ToString("G", CultureInfo.InvariantCulture) + "f";
 }

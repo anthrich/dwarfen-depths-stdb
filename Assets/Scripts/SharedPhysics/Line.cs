@@ -7,11 +7,15 @@ namespace SharedPhysics
     {
         public Vector2 Start;
         public Vector2 End;
+        // Height above which this line does not block.
+        // 0 (default) = always block. Positive = only block when entity.Y < SurfaceY.
+        public float SurfaceY;
 
-        public Line(Vector2 start, Vector2 end)
+        public Line(Vector2 start, Vector2 end, float surfaceY = 0f)
         {
             Start = start;
             End = end;
+            SurfaceY = surfaceY;
         }
         
         public static Vector2 GetNormal(Line wall)

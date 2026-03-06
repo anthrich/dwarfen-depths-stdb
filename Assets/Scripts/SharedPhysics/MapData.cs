@@ -12,11 +12,11 @@ namespace SharedPhysics
 
         private static Line[] BuildLines(float[] data)
         {
-            var result = new Line[data.Length / 4];
+            var result = new Line[data.Length / 5];
             for (int i = 0; i < result.Length; i++)
             {
-                int j = i * 4;
-                result[i] = new Line(new Vector2(data[j], data[j + 1]), new Vector2(data[j + 2], data[j + 3]));
+                int j = i * 5;
+                result[i] = new Line(new Vector2(data[j], data[j + 1]), new Vector2(data[j + 2], data[j + 3]), data[j + 4]);
             }
             return result;
         }

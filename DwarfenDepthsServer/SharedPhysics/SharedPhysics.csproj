@@ -16,20 +16,8 @@
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Entity.cs">
         <Link>Entity.cs</Link>
       </Compile>
-      <Compile Include="..\..\Assets\Scripts\SharedPhysics\Line.cs">
-        <Link>Line.cs</Link>
-      </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Vector2.cs">
         <Link>Vector2.cs</Link>
-      </Compile>
-      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.cs">
-        <Link>MapData.cs</Link>
-      </Compile>
-      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapData.*.cs">
-        <Link>%(Filename)%(Extension)</Link>
-      </Compile>
-      <Compile Include="..\..\Assets\Scripts\SharedPhysics\MapDefinition.cs">
-        <Link>MapDefinition.cs</Link>
       </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\Vector3.cs">
         <Link>Vector3.cs</Link>
@@ -45,9 +33,6 @@
       </Compile>
       <Compile Include="..\..\Assets\Scripts\SharedPhysics\TerrainGrid.cs">
         <Link>TerrainGrid.cs</Link>
-      </Compile>
-      <Compile Include="..\..\Assets\Scripts\SharedPhysics\LineGrid.cs">
-        <Link>LineGrid.cs</Link>
       </Compile>
     </ItemGroup>
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SpacetimeDB;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
@@ -124,8 +125,32 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Got config: {insertedValue}");
         Config = insertedValue;
-        var loadOp = SceneManager.LoadSceneAsync(insertedValue.MapName, LoadSceneMode.Additive);
-        loadOp.completed += _ => Simulation.Instance.Init(insertedValue.MapName);
+        var mapName = insertedValue.MapName;
+        var loadOp = SceneManager.LoadSceneAsync(mapName, LoadSceneMode.Additive);
+        loadOp.completed += _ =>
+        {
+            Conn.SubscriptionBuilder()
+                .OnApplied(OnMapDataLoaded)
+                .Subscribe(new[]
+                {
+                    $"SELECT * FROM MapConfig WHERE MapName = '{mapName}'",
+                    $"SELECT * FROM MapTriangleCell WHERE MapName = '{mapName}'",
+                    $"SELECT * FROM MapHeightmapPatch WHERE MapName = '{mapName}'",
+                });
+        };
+    }
+
+    private static void OnMapDataLoaded(SubscriptionEventContext ctx)
+    {
+        var cfg = Conn.Db.MapConfig.MapName.Find(Config.MapName);
+        if (cfg == null)
+        {
+            Debug.LogError($"MapConfig not found for '{Config.MapName}' after subscription applied.");
+            return;
+        }
+        var cells = Conn.Db.MapTriangleCell.Iter().Where(c => c.MapName == Config.MapName);
+        var patches = Conn.Db.MapHeightmapPatch.Iter().Where(p => p.MapName == Config.MapName);
+        Simulation.Instance.Init(cfg, cells, patches);
     }
 
     private static void OnEntityInserted(EventContext context, Entity insertedValue)

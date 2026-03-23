@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SharedPhysics;
+using SpacetimeDB.Types;
 using UnityEngine;
 using Entity = SharedPhysics.Entity;
 using Input = SpacetimeDB.Types.Input;
@@ -29,7 +31,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
 
     private Entity _serverEntityState;
     private readonly List<Entity> _entities = new();
-    private LineGrid _lineGrid;
+    private bool _isInitialized;
     private ITerrain _terrain;
     private readonly List<Input> _inputsAheadOfSimulation = new();
     private ulong _lastCorrectedSequenceId;
@@ -43,27 +45,45 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
         Instance = this;
     }
 
-    public void Init(string mapName)
+    public void Init(MapConfig cfg, IEnumerable<MapTriangleCell> cells, IEnumerable<MapHeightmapPatch> patches)
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
-        var map = MapData.GetMap(mapName);
-        _lineGrid = new LineGrid(map.Lines);
-
-        if (map.HasHeightmap)
+        if (cfg.HeightmapResolution > 0)
         {
-            _terrain = new Heightmap(
-                map.HeightmapData, map.HeightmapResolution,
-                map.HeightmapOriginX, map.HeightmapOriginZ,
-                map.HeightmapSizeX, map.HeightmapSizeZ);
-        }
-        else if (map.Triangles.Length > 0)
-        {
-            _terrain = new TerrainGrid(map.Triangles);
+            _terrain = ReconstructHeightmap(cfg, patches);
         }
         else
         {
-            _terrain = null;
+            var tris = cells
+                .OrderByDescending(c => (c.V0Y + c.V1Y + c.V2Y) / 3f)
+                .Select(c => new Triangle(
+                    new Vector3(c.V0X, c.V0Y, c.V0Z),
+                    new Vector3(c.V1X, c.V1Y, c.V1Z),
+                    new Vector3(c.V2X, c.V2Y, c.V2Z)))
+                .ToArray();
+            _terrain = tris.Length > 0 ? new TerrainGrid(tris) : null;
         }
+        _isInitialized = true;
+    }
+
+    private static ITerrain ReconstructHeightmap(MapConfig cfg, IEnumerable<MapHeightmapPatch> patches)
+    {
+        var heights = new float[cfg.HeightmapResolution * cfg.HeightmapResolution];
+        int ps = cfg.HeightmapPatchSize;
+        foreach (var patch in patches)
+        {
+            for (int row = 0; row < ps; row++)
+            for (int col = 0; col < ps; col++)
+            {
+                int globalZ = patch.PatchZ * ps + row;
+                int globalX = patch.PatchX * ps + col;
+                if (globalZ < cfg.HeightmapResolution && globalX < cfg.HeightmapResolution)
+                    heights[globalZ * cfg.HeightmapResolution + globalX] = patch.Heights[row * ps + col];
+            }
+        }
+        return new Heightmap(heights, cfg.HeightmapResolution,
+            cfg.HeightmapOriginX, cfg.HeightmapOriginZ,
+            cfg.HeightmapSizeX, cfg.HeightmapSizeZ);
     }
 
     public void SetLocalPlayerEntity(Entity localPlayerEntity)
@@ -116,7 +136,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
 
     private void Update()
     {
-        if(_currentSequenceId == 0 || _lineGrid == null) return;
+        if(_currentSequenceId == 0 || !_isInitialized) return;
         _accumulatedDeltaTime += Time.deltaTime;
         _accumulatedDeltaTime = Math.Min(_accumulatedDeltaTime, MaxAccumulatedTime);
 
@@ -153,7 +173,6 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 _serverUpdateInterval,
                 _currentSequenceId,
                 new[] { _localPlayerEntity },
-                _lineGrid,
                 _terrain
             );
 
@@ -203,10 +222,7 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
                 var result = Engine.Simulate(
                     _serverUpdateInterval,
                     rewindTick,
-                    new [] {
-                        localPlayerEntity
-                    },
-                    _lineGrid,
+                    new[] { localPlayerEntity },
                     _terrain
                 );
                 localPlayerEntity = result[0];

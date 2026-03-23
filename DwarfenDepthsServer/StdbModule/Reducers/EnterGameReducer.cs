@@ -1,4 +1,3 @@
-using SharedPhysics;
 using SpacetimeDB;
 
 public static partial class Module
@@ -17,10 +16,10 @@ public static partial class Module
     {
         var entityUpdate = ctx.Db.EntityUpdate.Id.Find(0) ?? throw new Exception("EntityUpdate not found");
         var config = ctx.Db.Config.Id.Find(0) ?? throw new Exception("Config not found");
-        var spawnPos = MapData.GetMap(config.MapName).DefaultSpawnPosition;
+        var mapCfg = ctx.Db.MapConfig.MapName.Find(config.MapName) ?? throw new Exception($"MapConfig not found for '{config.MapName}'");
         var playerEntity = ctx.Db.Entity.Insert(new Entity
         {
-            Position = new DbVector3(spawnPos.X, spawnPos.Y, spawnPos.Z),
+            Position = new DbVector3(mapCfg.SpawnX, mapCfg.SpawnY, mapCfg.SpawnZ),
             Direction = new DbVector2(0, 0),
             SequenceId = entityUpdate.SequenceId,
             Speed = 7f,

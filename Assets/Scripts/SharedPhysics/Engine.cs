@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SharedPhysics
 {
     public static class Engine
     {
-        [ThreadStatic] private static List<Line>? _nearbyLinesBuffer;
         private const float Gravity = -19.62f;
         public const float JumpImpulse = 8f;
         private const float MaxSlopeAngle = 60f;
@@ -23,38 +20,6 @@ namespace SharedPhysics
                 Height = height;
                 SnapDistance = snapDistance;
             }
-        }
-
-        public static Vector2? GetIntersection(Line line1, Line line2)
-        {
-            var p1 = line1.Start;
-            var p2 = line1.End;
-            var p3 = line2.Start;
-            var p4 = line2.End;
-
-            var d1 = p2 - p1; // Direction of line 1
-            var d2 = p4 - p3; // Direction of line 2
-
-            var cross = d1.X * d2.Y - d1.Y * d2.X;
-
-            if (Math.Abs(cross) < 0.0001f)
-                return default; // Parallel lines
-
-            var t = ((p3.X - p1.X) * d2.Y - (p3.Y - p1.Y) * d2.X) / cross;
-            var u = ((p3.X - p1.X) * d1.Y - (p3.Y - p1.Y) * d1.X) / cross;
-
-            if (t >= 0 && t <= 1 && u >= 0 && u <= 1)
-            {
-                return p1 + d1 * t;
-            }
-
-            return default;
-        }
-
-        public static Line[] GetNearbyLines(Line line1, Line[] allLines)
-        {
-            var movementBounds = BoundingBox.FromLine(line1);
-            return allLines.Where(line => BoundingBox.FromLine(line).Overlaps(movementBounds)).ToArray();
         }
 
         private static Vector2 ProjectMovementOntoSurface(
@@ -120,31 +85,6 @@ namespace SharedPhysics
             return targetMovement;
         }
 
-        private static Vector2 ApplyWallCollisions(
-            Vector2 currentPositionXz, Vector2 targetPositionXz,
-            LineGrid lineGrid, List<Line> nearbyLinesBuffer, float entityY)
-        {
-            var targetMovement = targetPositionXz - currentPositionXz;
-            var movementLine = new Line(currentPositionXz, targetPositionXz);
-            lineGrid.GetNearbyLines(BoundingBox.FromLine(movementLine), nearbyLinesBuffer);
-
-            foreach (var line in nearbyLinesBuffer)
-            {
-                if (line.SurfaceY > 0 && entityY >= line.SurfaceY) continue;
-                var intersection = GetIntersection(movementLine, line);
-                if (!intersection.HasValue) continue;
-                var safeDistance = (intersection.Value - currentPositionXz).Normalized() * 0.05f;
-                var safeMovement = intersection.Value - safeDistance - currentPositionXz;
-                var safePosition = currentPositionXz + safeMovement;
-                var remainingMovement = targetMovement - safeMovement;
-                var glideMovement = Line.GlideAlong(line, remainingMovement);
-                targetPositionXz = safePosition + glideMovement;
-                movementLine = new Line(currentPositionXz, targetPositionXz);
-            }
-
-            return targetPositionXz;
-        }
-
         private static GroundContact ResolveGroundContact(
             ITerrain terrain, Vector2 currentPositionXz, float currentY,
             Vector2 targetPositionXz, Triangle? currentTriangle)
@@ -201,11 +141,10 @@ namespace SharedPhysics
         }
 
         public static Entity[] Simulate(
-            float deltaTime, ulong sequenceId, Entity[] entities, LineGrid lineGrid, ITerrain terrain)
+            float deltaTime, ulong sequenceId, Entity[] entities, ITerrain? terrain)
         {
             var processed = new Entity[entities.Length];
             var i = 0;
-            _nearbyLinesBuffer ??= new List<Line>();
 
             foreach (var entity in entities)
             {
@@ -215,22 +154,28 @@ namespace SharedPhysics
                 var surfaceSpeed = entity.Speed * (isBackpedalling ? 0.5f : 1f) * deltaTime;
 
                 var currentPositionXz = entity.Position.ToXz();
-                var currentTriangle = terrain.GetTriangle(currentPositionXz);
+                var currentTriangle = terrain?.GetTriangle(currentPositionXz);
 
                 var targetMovement = ComputeXzMovement(
                     normalizedDirection, surfaceSpeed, currentTriangle, entity.IsGrounded, deltaTime);
-                var targetPositionXz = ApplyWallCollisions(
-                    currentPositionXz, currentPositionXz + targetMovement, lineGrid, _nearbyLinesBuffer, entity.Position.Y);
+                var targetPositionXz = currentPositionXz + targetMovement;
 
                 processed[i] = entity;
                 processed[i].SequenceId = sequenceId;
 
-                var ground = ResolveGroundContact(
-                    terrain, currentPositionXz, entity.Position.Y, targetPositionXz, currentTriangle);
-                var (pos, grounded, vel) = ComputeVerticalPosition(entity, targetPositionXz, ground, deltaTime);
-                processed[i].Position = pos;
-                processed[i].IsGrounded = grounded;
-                processed[i].VerticalVelocity = vel;
+                if (terrain != null)
+                {
+                    var ground = ResolveGroundContact(
+                        terrain, currentPositionXz, entity.Position.Y, targetPositionXz, currentTriangle);
+                    var (pos, grounded, vel) = ComputeVerticalPosition(entity, targetPositionXz, ground, deltaTime);
+                    processed[i].Position = pos;
+                    processed[i].IsGrounded = grounded;
+                    processed[i].VerticalVelocity = vel;
+                }
+                else
+                {
+                    processed[i].Position = Vector3.FromXz(targetPositionXz, entity.Position.Y);
+                }
 
                 i++;
             }

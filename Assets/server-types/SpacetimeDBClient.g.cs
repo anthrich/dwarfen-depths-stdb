@@ -26,6 +26,10 @@ namespace SpacetimeDB.Types
             AddTable(Config = new(conn));
             AddTable(Entity = new(conn));
             AddTable(EntityUpdate = new(conn));
+            AddTable(MapAdmin = new(conn));
+            AddTable(MapConfig = new(conn));
+            AddTable(MapHeightmapPatch = new(conn));
+            AddTable(MapTriangleCell = new(conn));
             AddTable(Player = new(conn));
             AddTable(PlayerInput = new(conn));
             AddTable(MoveAllEntitiesTimer = new(conn));
@@ -472,11 +476,17 @@ namespace SpacetimeDB.Types
             var encodedArgs = update.ReducerCall.Args;
             return update.ReducerCall.ReducerName switch
             {
+                "ClearMapData" => BSATNHelpers.Decode<Reducer.ClearMapData>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "EnterGame" => BSATNHelpers.Decode<Reducer.EnterGame>(encodedArgs),
                 "MoveAllEntities" => BSATNHelpers.Decode<Reducer.MoveAllEntities>(encodedArgs),
+                "SetMapAdmin" => BSATNHelpers.Decode<Reducer.SetMapAdmin>(encodedArgs),
+                "SpawnDefaultEntities" => BSATNHelpers.Decode<Reducer.SpawnDefaultEntities>(encodedArgs),
                 "UpdatePlayerInput" => BSATNHelpers.Decode<Reducer.UpdatePlayerInput>(encodedArgs),
+                "UploadMapConfig" => BSATNHelpers.Decode<Reducer.UploadMapConfig>(encodedArgs),
+                "UploadMapHeightmapBatch" => BSATNHelpers.Decode<Reducer.UploadMapHeightmapBatch>(encodedArgs),
+                "UploadMapTriangleBatch" => BSATNHelpers.Decode<Reducer.UploadMapTriangleBatch>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -498,11 +508,17 @@ namespace SpacetimeDB.Types
             var eventContext = (ReducerEventContext)context;
             return reducer switch
             {
+                Reducer.ClearMapData args => Reducers.InvokeClearMapData(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.EnterGame args => Reducers.InvokeEnterGame(eventContext, args),
                 Reducer.MoveAllEntities args => Reducers.InvokeMoveAllEntities(eventContext, args),
+                Reducer.SetMapAdmin args => Reducers.InvokeSetMapAdmin(eventContext, args),
+                Reducer.SpawnDefaultEntities args => Reducers.InvokeSpawnDefaultEntities(eventContext, args),
                 Reducer.UpdatePlayerInput args => Reducers.InvokeUpdatePlayerInput(eventContext, args),
+                Reducer.UploadMapConfig args => Reducers.InvokeUploadMapConfig(eventContext, args),
+                Reducer.UploadMapHeightmapBatch args => Reducers.InvokeUploadMapHeightmapBatch(eventContext, args),
+                Reducer.UploadMapTriangleBatch args => Reducers.InvokeUploadMapTriangleBatch(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

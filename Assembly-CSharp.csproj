@@ -82,6 +82,7 @@
     <Compile Include="Assets\server-types\Reducers\UploadMapTriangleBatch.g.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Engine.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\Vector2.cs" />
+    <Compile Include="Assets\Scripts\UI\LoadingScreen.cs" />
     <Compile Include="Assets\Scripts\SharedPhysics\TerrainGrid.cs" />
     <Compile Include="Assets\server-types\Tables\Config.g.cs" />
     <Compile Include="Assets\Scripts\PlayerTargetting.cs" />
@@ -124,6 +125,7 @@
     <None Include="Assets\UserInterface\Controls.uxml" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
+    <None Include="Assets\UserInterface\LoadingScreen.uss" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\UserInterface\MainMenu.uxml" />
     <None Include="Assets\UserInterface\Resources\Keybind.uxml" />
@@ -147,6 +149,7 @@
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
     <None Include="Assets\UserInterface\MainMenu.uss" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
+    <None Include="Assets\UserInterface\LoadingScreen.uxml" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne.json" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
     <Reference Include="UnityEngine">

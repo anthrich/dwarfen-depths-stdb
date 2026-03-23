@@ -45,25 +45,39 @@ public class Simulation : MonoBehaviour, IPublisher<Entity>
         Instance = this;
     }
 
-    public void Init(MapConfig cfg, IEnumerable<MapTriangleCell> cells, IEnumerable<MapHeightmapPatch> patches)
+    public async void Init(MapConfig cfg, IEnumerable<MapTriangleCell> cells,
+                           IEnumerable<MapHeightmapPatch> patches,
+                           IProgress<float> progress = null)
     {
         _serverUpdateInterval = GameManager.Config.UpdateEntityInterval;
         if (cfg.HeightmapResolution > 0)
         {
-            _terrain = ReconstructHeightmap(cfg, patches);
+            var snapshot = patches.ToList();
+            progress?.Report(0.1f);
+            _terrain = await System.Threading.Tasks.Task.Run(() => ReconstructHeightmap(cfg, snapshot));
         }
         else
         {
-            var tris = cells
-                .OrderByDescending(c => (c.V0Y + c.V1Y + c.V2Y) / 3f)
-                .Select(c => new Triangle(
-                    new Vector3(c.V0X, c.V0Y, c.V0Z),
-                    new Vector3(c.V1X, c.V1Y, c.V1Z),
-                    new Vector3(c.V2X, c.V2Y, c.V2Z)))
-                .ToArray();
-            _terrain = tris.Length > 0 ? new TerrainGrid(tris) : null;
+            var snapshot = cells.ToList();
+            progress?.Report(0.1f);
+            _terrain = await System.Threading.Tasks.Task.Run(() =>
+            {
+                var sorted = snapshot
+                    .OrderByDescending(c => (c.V0Y + c.V1Y + c.V2Y) / 3f)
+                    .ToArray();
+                progress?.Report(0.5f);
+                var tris = sorted
+                    .Select(c => new Triangle(
+                        new Vector3(c.V0X, c.V0Y, c.V0Z),
+                        new Vector3(c.V1X, c.V1Y, c.V1Z),
+                        new Vector3(c.V2X, c.V2Y, c.V2Z)))
+                    .ToArray();
+                progress?.Report(0.9f);
+                return tris.Length > 0 ? (ITerrain)new TerrainGrid(tris) : null;
+            });
         }
         _isInitialized = true;
+        GameManager.NotifyMapLoaded();
     }
 
     private static ITerrain ReconstructHeightmap(MapConfig cfg, IEnumerable<MapHeightmapPatch> patches)

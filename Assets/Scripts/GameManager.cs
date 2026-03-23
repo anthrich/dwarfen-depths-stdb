@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     public static event Action OnConnected;
     public static event Action OnDisconnected;
     public static event Action OnSubscriptionApplied;
+    public static event Action OnMapLoaded;
+    public static event Action OnGameReady;
+    public static event Action<float> OnLoadProgress;
 
 	public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
@@ -150,8 +153,11 @@ public class GameManager : MonoBehaviour
         }
         var cells = Conn.Db.MapTriangleCell.Iter().Where(c => c.MapName == Config.MapName);
         var patches = Conn.Db.MapHeightmapPatch.Iter().Where(p => p.MapName == Config.MapName);
-        Simulation.Instance.Init(cfg, cells, patches);
+        var progress = new System.Progress<float>(t => OnLoadProgress?.Invoke(t));
+        Simulation.Instance.Init(cfg, cells, patches, progress);
     }
+
+    public static void NotifyMapLoaded() => OnMapLoaded?.Invoke();
 
     private static void OnEntityInserted(EventContext context, Entity insertedValue)
     {
@@ -222,6 +228,7 @@ public class GameManager : MonoBehaviour
         });
         Entities.Add(LocalPlayer.EntityId, entityController);
         Conn.Reducers.OnEnterGame -= OnGameEntered;
+        OnGameReady?.Invoke();
     }
 
     private void OnDbPlayerUpdated(EventContext context, Player oldPlayer, Player newPlayer)
